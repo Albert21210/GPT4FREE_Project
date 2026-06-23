@@ -72,3 +72,7 @@ class AppConfig:
         "show_timestamps": True,
         "color_scheme": "dark"
     })
+
+    # Multiple profiles
+    profiles: dict[str, dict] = field(default_factory=dict)
+    active_profile: Optional[str] = None
