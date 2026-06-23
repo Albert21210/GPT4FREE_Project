@@ -41,3 +41,11 @@ CONFIG_SCHEMA = {
     },
     "required": ["version", "provider", "model"]
 }
+
+@dataclass
+class AppConfig:
+
+    # Core
+    version: str = CONFIG_VERSION
+    provider: str = DEFAULT_PROVIDER
+    model: str = DEFAULT_MODEL
