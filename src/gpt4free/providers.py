@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
+
 
 WORKING_PROVIDERS: dict[str, list[tuple[str, str]]] = {
     "PollinationsAI": [
@@ -48,3 +51,31 @@ STATUS_COLOR: dict[ProviderStatus, str] = {
     ProviderStatus.DOWN:          "red",
     ProviderStatus.UNKNOWN:       "dim",
 }
+
+
+@dataclass(slots=True)
+class ModelInfo:
+    alias: str
+    display: str
+
+
+@dataclass
+class ProviderInfo:
+    name: str
+    model_list: list[ModelInfo]
+    status: ProviderStatus = ProviderStatus.WORKING
+    detail: str = ""
+    latency_ms: Optional[int] = None
+
+    @property
+    def models(self) -> list[str]:
+        return [m.alias for m in self.model_list]
+
+    @property
+    def status_label(self) -> str:
+        emoji = STATUS_EMOJI.get(self.status, "?")
+        return f"{emoji} {self.status.value}"
+
+    @property
+    def status_color(self) -> str:
+        return STATUS_COLOR.get(self.status, "white")
