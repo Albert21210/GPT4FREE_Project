@@ -76,3 +76,8 @@ class AppConfig:
     # Multiple profiles
     profiles: dict[str, dict] = field(default_factory=dict)
     active_profile: Optional[str] = None
+
+    def add_to_history(self, prompt: str) -> None:
+        if not prompt:
+            return
+        self.prompt_history.append(prompt)
