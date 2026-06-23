@@ -57,3 +57,11 @@ class AppConfig:
 
     # History
     prompt_history: list[str] = field(default_factory=list)
+
+    # Session tracking
+    last_session: dict[str, Any] = field(default_factory=dict)
+    stats: dict[str, Any] = field(default_factory=lambda: {
+        "total_queries": 0,
+        "first_used": None,
+        "last_used": None
+    })
