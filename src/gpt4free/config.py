@@ -80,4 +80,8 @@ class AppConfig:
     def add_to_history(self, prompt: str) -> None:
         if not prompt:
             return
+
+        if prompt in self.prompt_history:
+            self.prompt_history.remove(prompt)
+
         self.prompt_history.append(prompt)
