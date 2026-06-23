@@ -34,12 +34,14 @@ DEFAULT_MODEL: str = "openai"
 PROBE_PROMPT: str = "Reply with one word: hello"
 PROBE_TIMEOUT: float = 12.0
 
+
 class ProviderStatus(str, Enum):
     UNKNOWN = "unknown"
     WORKING = "working"
     RATE_LIMITED = "rate_limited"
     AUTH_REQUIRED = "auth_required"
     DOWN = "down"
+
 
 STATUS_EMOJI: dict[ProviderStatus, str] = {
     ProviderStatus.WORKING:       "✅",
@@ -84,8 +86,8 @@ class ProviderInfo:
     @property
     def status_color(self) -> str:
         return STATUS_COLOR.get(self.status, "white")
-    
-    
+
+
 def list_providers() -> list[ProviderInfo]:
     result: list[ProviderInfo] = []
     seen: set[str] = set()
@@ -168,3 +170,16 @@ async def probe_provider(info: ProviderInfo) -> ProviderInfo:
         info.latency_ms = int((time.monotonic() - start) * 1000)
 
     return info
+
+
+async def probe_all(
+    providers: list[ProviderInfo],
+    concurrency: int = 4,
+) -> list[ProviderInfo]:
+    sem = asyncio.Semaphore(concurrency)
+
+    async def _bounded(p: ProviderInfo) -> ProviderInfo:
+        async with sem:
+            return await probe_provider(p)
+
+    return list(await asyncio.gather(*(_bounded(p) for p in providers)))
