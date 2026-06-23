@@ -49,3 +49,8 @@ class AppConfig:
     version: str = CONFIG_VERSION
     provider: str = DEFAULT_PROVIDER
     model: str = DEFAULT_MODEL
+
+    # Behavior
+    stream: bool = True
+    syntax_theme: str = "monokai"
+    max_history_items: int = 200
