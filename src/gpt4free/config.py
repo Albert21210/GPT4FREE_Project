@@ -65,3 +65,10 @@ class AppConfig:
         "first_used": None,
         "last_used": None
     })
+
+    # UI preferences
+    ui: dict[str, Any] = field(default_factory=lambda: {
+        "compact_mode": False,
+        "show_timestamps": True,
+        "color_scheme": "dark"
+    })
