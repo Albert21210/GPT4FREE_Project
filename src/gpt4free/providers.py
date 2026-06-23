@@ -79,3 +79,36 @@ class ProviderInfo:
     @property
     def status_color(self) -> str:
         return STATUS_COLOR.get(self.status, "white")
+    
+    def list_providers() -> list[ProviderInfo]:
+        result: list[ProviderInfo] = []
+        seen: set[str] = set()
+
+        for name in PROVIDER_ORDER:
+            if name in WORKING_PROVIDERS:
+                entries = WORKING_PROVIDERS[name]
+                model_list = [ModelInfo(alias=a, display=d) for a, d in entries]
+                result.append(ProviderInfo(name=name, model_list=model_list))
+                seen.add(name)
+
+        for name, entries in WORKING_PROVIDERS.items():
+            if name not in seen:
+                model_list = [ModelInfo(alias=a, display=d) for a, d in entries]
+                result.append(ProviderInfo(name=name, model_list=model_list))
+
+        return result
+    
+
+    def get_provider_info(name: str) -> Optional[ProviderInfo]:
+        for p in list_providers():
+            if p.name == name:
+                return p
+        return None
+
+    def get_provider_class(name: str) -> Optional[object]:
+        try:
+            from g4f import Provider
+            cls = getattr(Provider, name, None)
+            return cls
+        except ImportError:
+            return None
