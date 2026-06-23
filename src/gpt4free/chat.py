@@ -122,3 +122,32 @@ class ChatSession:
             return str(result)
         except Exception as exc:  # noqa: BLE001
             return f"[error] {exc}\n(primary: {reason})"
+
+    # one-shot 
+
+    async def ask_once(self) -> str:
+        """Return the full response without streaming."""
+        from g4f.client import AsyncClient  # type: ignore[import]
+
+        provider_cls = get_provider_class(self.provider)
+        try:
+            client = AsyncClient(provider=provider_cls)
+            response = await client.chat.completions.create(
+                model=self.model,
+                messages=self._payload(),
+            )
+            return str(response.choices[0].message.content)
+        except Exception as exc:  # noqa: BLE001
+            # Fallback
+            import g4f  # type: ignore[import]
+            try:
+                result = await asyncio.to_thread(
+                    g4f.ChatCompletion.create,
+                    model=self.model,
+                    messages=self._payload(),
+                    provider=provider_cls,
+                    stream=False,
+                )
+                return str(result)
+            except Exception as exc2:  # noqa: BLE001
+                return f"[error] {exc2}"
