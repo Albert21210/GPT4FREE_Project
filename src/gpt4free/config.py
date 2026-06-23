@@ -54,3 +54,6 @@ class AppConfig:
     stream: bool = True
     syntax_theme: str = "monokai"
     max_history_items: int = 200
+
+    # History
+    prompt_history: list[str] = field(default_factory=list)
