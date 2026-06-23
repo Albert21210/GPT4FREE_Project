@@ -69,3 +69,56 @@ class ChatSession:
 
     def clear(self) -> None:
         self.messages.clear()
+
+    # streaming 
+
+    async def ask_stream(self) -> AsyncIterator[str]:
+        """
+        Yield text chunks using g4f.client.AsyncClient (modern streaming API).
+
+        Falls back to legacy g4f.ChatCompletion.create if AsyncClient fails.
+        """
+        from g4f.client import AsyncClient  # type: ignore[import]
+
+        provider_cls = get_provider_class(self.provider)
+
+        try:
+            client = AsyncClient(provider=provider_cls)
+            stream = client.chat.completions.stream(
+                model=self.model,
+                messages=self._payload(),
+            )
+            # stream is an async iterable, not a context manager
+            async for chunk in stream:
+                text = _extract_chunk(chunk)
+                if text:
+                    yield text
+        except Exception as primary_exc:  # noqa: BLE001
+            # Fallback to legacy synchronous API in a thread
+            yield await self._legacy_fallback(str(primary_exc))
+
+    async def _legacy_fallback(self, reason: str) -> str:
+        """
+        Try legacy g4f.ChatCompletion.create when AsyncClient fails.
+        Returns the full response as one string (no streaming).
+        """
+        import g4f  # type: ignore[import]
+
+        provider_cls = get_provider_class(self.provider)
+        try:
+            result = await asyncio.to_thread(
+                g4f.ChatCompletion.create,
+                model=self.model,
+                messages=self._payload(),
+                provider=provider_cls,
+                stream=False,
+            )
+            # result may be str or object
+            if isinstance(result, str):
+                return result
+            content = getattr(result, "choices", None)
+            if content:
+                return str(content[0].message.content)
+            return str(result)
+        except Exception as exc:  # noqa: BLE001
+            return f"[error] {exc}\n(primary: {reason})"
