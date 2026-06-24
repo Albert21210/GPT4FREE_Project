@@ -61,3 +61,22 @@ def test_session_push_assistant() -> None:
     s = ChatSession(provider="Blackbox", model="gpt-4o")
     s.push_assistant("hello")
     assert s.messages[-1] == Message("assistant", "hello")
+    
+
+def test_session_clear() -> None:
+    s = ChatSession(provider="Blackbox", model="gpt-4o")
+    s.push_user("a")
+    s.push_assistant("b")
+    s.clear()
+    assert s.messages == []
+
+
+def test_session_payload() -> None:
+    s = ChatSession(provider="Blackbox", model="gpt-4o")
+    s.push_user("q")
+    s.push_assistant("a")
+    payload = s._payload()
+    assert payload == [
+        {"role": "user", "content": "q"},
+        {"role": "assistant", "content": "a"},
+    ]
