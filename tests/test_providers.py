@@ -25,3 +25,26 @@ def test_list_providers_non_empty() -> None:
 def test_every_provider_has_at_least_one_model() -> None:
     for p in list_providers():
         assert len(p.model_list) > 0, f"{p.name} has no models"
+
+
+def test_default_provider_in_list() -> None:
+    info = get_provider_info(DEFAULT_PROVIDER)
+    assert info is not None, f"{DEFAULT_PROVIDER} not found in provider list"
+
+
+def test_default_model_in_default_provider() -> None:
+    info = get_provider_info(DEFAULT_PROVIDER)
+    assert info is not None
+    aliases = [m.alias for m in info.model_list]
+    assert DEFAULT_MODEL in aliases, (
+        f"{DEFAULT_MODEL} not found in {DEFAULT_PROVIDER} model list: {aliases}"
+    )
+
+
+def test_provider_info_types() -> None:
+    p = list_providers()[0]
+    assert isinstance(p, ProviderInfo)
+    m = p.model_list[0]
+    assert isinstance(m, ModelInfo)
+    assert isinstance(m.alias, str) and m.alias
+    assert isinstance(m.display, str) and m.display
