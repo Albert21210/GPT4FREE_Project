@@ -124,6 +124,16 @@ class AppConfig:
         self.ui.update(profile.get("ui", {}))
         self.active_profile = name
 
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["version"] = CONFIG_VERSION
+        data["_meta"] = {
+            "saved_at": datetime.now().isoformat(),
+            "python_version": __import__("sys").version,
+            "config_hash": self._get_hash()
+        }
+        return data
+
     def _get_hash(self) -> str:
         data = asdict(self)
         data.pop("_meta", None)
