@@ -88,3 +88,5 @@ class AppConfig:
 
         if len(self.prompt_history) > self.max_history_items:
             self.prompt_history = self.prompt_history[-self.max_history_items:]
+
+        self.stats["total_queries"] = self.stats.get("total_queries", 0) + 1
