@@ -96,3 +96,6 @@ class AppConfig:
 
     def get_recent_history(self, n: int = 10) -> list[str]:
         return self.prompt_history[-n:]
+    
+    def search_history(self, query: str) -> list[str]:
+        return [p for p in reversed(self.prompt_history) if query.lower() in p.lower()]
