@@ -123,3 +123,8 @@ class AppConfig:
         self.syntax_theme = profile.get("syntax_theme", self.syntax_theme)
         self.ui.update(profile.get("ui", {}))
         self.active_profile = name
+
+    def _get_hash(self) -> str:
+        data = asdict(self)
+        data.pop("_meta", None)
+        return hashlib.md5(json.dumps(data, sort_keys=True).encode()).hexdigest()[:8]
