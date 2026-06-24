@@ -47,3 +47,17 @@ def test_extract_chunk_content_attribute_fallback() -> None:
     obj.content = "fallback"
     # No choices attribute → AttributeError caught → fallback path
     assert _extract_chunk(obj) == "fallback"
+    
+
+# ChatSession 
+
+def test_session_push_user() -> None:
+    s = ChatSession(provider="Blackbox", model="gpt-4o")
+    s.push_user("hi")
+    assert s.messages[-1] == Message("user", "hi")
+
+
+def test_session_push_assistant() -> None:
+    s = ChatSession(provider="Blackbox", model="gpt-4o")
+    s.push_assistant("hello")
+    assert s.messages[-1] == Message("assistant", "hello")
