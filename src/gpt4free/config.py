@@ -93,3 +93,6 @@ class AppConfig:
         self.stats["last_used"] = datetime.now().isoformat()
         if not self.stats.get("first_used"):
             self.stats["first_used"] = datetime.now().isoformat()
+
+    def get_recent_history(self, n: int = 10) -> list[str]:
+        return self.prompt_history[-n:]
