@@ -149,3 +149,19 @@ class AppConfig:
                 raise ValueError("Missing required fields: provider, model")
         except jsonschema.ValidationError as e:
             raise ValueError(f"Invalid config: {e.message}")
+        
+    @staticmethod
+    def _migrate_v1_to_v2(data: dict[str, Any]) -> dict[str, Any]:
+        data["version"] = "2.0.0"
+        data.setdefault("stats", {
+            "total_queries": 0,
+            "first_used": None,
+            "last_used": None
+        })
+        data.setdefault("ui", {
+            "compact_mode": False,
+            "show_timestamps": True,
+            "color_scheme": "dark"
+        })
+        data.setdefault("profiles", {})
+        return data
