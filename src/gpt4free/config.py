@@ -90,3 +90,4 @@ class AppConfig:
             self.prompt_history = self.prompt_history[-self.max_history_items:]
 
         self.stats["total_queries"] = self.stats.get("total_queries", 0) + 1
+        self.stats["last_used"] = datetime.now().isoformat()
