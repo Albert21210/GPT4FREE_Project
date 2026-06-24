@@ -48,3 +48,21 @@ def test_provider_info_types() -> None:
     assert isinstance(m, ModelInfo)
     assert isinstance(m.alias, str) and m.alias
     assert isinstance(m.display, str) and m.display
+    
+
+def test_default_status_is_working() -> None:
+    """All curated providers start as WORKING before probing."""
+    for p in list_providers():
+        assert p.status == ProviderStatus.WORKING
+
+
+def test_provider_order_respected() -> None:
+    """Providers in PROVIDER_ORDER come first in list_providers()."""
+    names = [p.name for p in list_providers()]
+    ordered_present = [n for n in PROVIDER_ORDER if n in WORKING_PROVIDERS]
+    assert names[: len(ordered_present)] == ordered_present
+
+
+def test_no_duplicate_providers() -> None:
+    names = [p.name for p in list_providers()]
+    assert len(names) == len(set(names)), "Duplicate providers in list"
