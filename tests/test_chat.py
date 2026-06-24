@@ -28,3 +28,22 @@ def test_extract_chunk_new_style_object() -> None:
     chunk = MagicMock()
     chunk.choices = [choice]
     assert _extract_chunk(chunk) == "world"
+    
+
+def test_extract_chunk_none_delta_content() -> None:
+    """None content should return empty string."""
+    delta = MagicMock()
+    delta.content = None
+    choice = MagicMock()
+    choice.delta = delta
+    chunk = MagicMock()
+    chunk.choices = [choice]
+    assert _extract_chunk(chunk) == ""
+
+
+def test_extract_chunk_content_attribute_fallback() -> None:
+    """Object with .content but no .choices should use fallback."""
+    obj = MagicMock(spec=["content"])
+    obj.content = "fallback"
+    # No choices attribute → AttributeError caught → fallback path
+    assert _extract_chunk(obj) == "fallback"
