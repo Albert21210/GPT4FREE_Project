@@ -91,3 +91,5 @@ class AppConfig:
 
         self.stats["total_queries"] = self.stats.get("total_queries", 0) + 1
         self.stats["last_used"] = datetime.now().isoformat()
+        if not self.stats.get("first_used"):
+            self.stats["first_used"] = datetime.now().isoformat()
