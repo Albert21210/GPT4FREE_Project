@@ -99,3 +99,6 @@ class AppConfig:
     
     def search_history(self, query: str) -> list[str]:
         return [p for p in reversed(self.prompt_history) if query.lower() in p.lower()]
+    
+    def clear_history(self) -> None:
+        self.prompt_history.clear()
