@@ -138,3 +138,14 @@ class AppConfig:
         data = asdict(self)
         data.pop("_meta", None)
         return hashlib.md5(json.dumps(data, sort_keys=True).encode()).hexdigest()[:8]
+    
+    @staticmethod
+    def _validate(data: dict[str, Any]) -> None:
+        try:
+            import jsonschema
+            jsonschema.validate(data, CONFIG_SCHEMA)
+        except ImportError:
+            if "provider" not in data or "model" not in data:
+                raise ValueError("Missing required fields: provider, model")
+        except jsonschema.ValidationError as e:
+            raise ValueError(f"Invalid config: {e.message}")
