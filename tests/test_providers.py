@@ -48,7 +48,7 @@ def test_provider_info_types() -> None:
     assert isinstance(m, ModelInfo)
     assert isinstance(m.alias, str) and m.alias
     assert isinstance(m.display, str) and m.display
-    
+
 
 def test_default_status_is_working() -> None:
     """All curated providers start as WORKING before probing."""
@@ -66,3 +66,30 @@ def test_provider_order_respected() -> None:
 def test_no_duplicate_providers() -> None:
     names = [p.name for p in list_providers()]
     assert len(names) == len(set(names)), "Duplicate providers in list"
+
+
+def test_no_empty_aliases() -> None:
+    for p in list_providers():
+        for m in p.model_list:
+            assert m.alias.strip(), f"Empty alias in {p.name}"
+            assert m.display.strip(), f"Empty display in {p.name}"
+
+
+def test_status_label_format() -> None:
+    p = list_providers()[0]
+    label = p.status_label
+    assert "working" in label
+
+
+def test_models_property() -> None:
+    p = list_providers()[0]
+    assert p.models == [m.alias for m in p.model_list]
+
+
+def test_working_providers_dict_integrity() -> None:
+    """All entries in WORKING_PROVIDERS are valid (alias, display) tuples."""
+    for name, entries in WORKING_PROVIDERS.items():
+        assert isinstance(name, str) and name
+        for alias, display in entries:
+            assert isinstance(alias, str) and alias, f"Bad alias in {name}"
+            assert isinstance(display, str) and display, f"Bad display in {name}"
