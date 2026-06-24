@@ -102,3 +102,24 @@ class AppConfig:
     
     def clear_history(self) -> None:
         self.prompt_history.clear()
+
+    def save_profile(self, name: str) -> None:
+        self.profiles[name] = {
+            "provider": self.provider,
+            "model": self.model,
+            "stream": self.stream,
+            "syntax_theme": self.syntax_theme,
+            "ui": self.ui.copy()
+        }
+
+    def load_profile(self, name: str) -> None:
+        if name not in self.profiles:
+            raise ValueError(f"Profile '{name}' not found")
+
+        profile = self.profiles[name]
+        self.provider = profile.get("provider", self.provider)
+        self.model = profile.get("model", self.model)
+        self.stream = profile.get("stream", self.stream)
+        self.syntax_theme = profile.get("syntax_theme", self.syntax_theme)
+        self.ui.update(profile.get("ui", {}))
+        self.active_profile = name
