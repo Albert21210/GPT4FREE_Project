@@ -85,3 +85,6 @@ class AppConfig:
             self.prompt_history.remove(prompt)
 
         self.prompt_history.append(prompt)
+
+        if len(self.prompt_history) > self.max_history_items:
+            self.prompt_history = self.prompt_history[-self.max_history_items:]
