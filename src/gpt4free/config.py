@@ -192,6 +192,19 @@ class ConfigManager:
         path.mkdir(parents=True, exist_ok=True)
         return path / "config.json"
     
+    def load(self) -> AppConfig:
+        if not self._config_path.exists():
+            return AppConfig()
+
+        self._backup_current()
+
+        try:
+            raw = self._config_path.read_text(encoding="utf-8")
+            data = json.loads(raw)
+            return AppConfig.from_dict(data)
+        except (json.JSONDecodeError, ValueError, TypeError):
+            return self._recover_from_backup()
+    
     def _backup_current(self) -> None:
         if not self._config_path.exists():
             return
