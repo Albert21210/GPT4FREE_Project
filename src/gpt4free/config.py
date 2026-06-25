@@ -255,3 +255,10 @@ class ConfigManager:
             raise FileNotFoundError(f"Backup '{backup_name}' not found")
 
         backup_path.copy(self._config_path)
+
+    def export(self, path: Path) -> None:
+        config = self.load()
+        path.write_text(
+            json.dumps(config.to_dict(), indent=2, ensure_ascii=False),
+            encoding="utf-8"
+        )
