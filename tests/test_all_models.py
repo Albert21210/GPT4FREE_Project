@@ -10,13 +10,12 @@ PROVIDERS_MODELS = {
     "DuckDuckGo": ["gpt-4o-mini", "claude-3-haiku", "llama-3.3-70b", "mixtral-8x7b"],
 }
 
-
 async def test_model(provider_name, model):
     try:
         provider = getattr(g4f.Provider, provider_name, None)
         if not provider:
             return False, "Provider not found"
-
+        
         print(f"Testing {provider_name}/{model}...")
         response = await asyncio.to_thread(
             g4f.ChatCompletion.create,
@@ -46,3 +45,17 @@ async def main():
             if success:
                 working[provider].append(model)
             await asyncio.sleep(1)  # Задержка чтобы не банить
+    
+    print("\n" + "="*60)
+    print("📊 WORKING MODELS BY PROVIDER:")
+    print("="*60)
+    for provider, models in working.items():
+        if models:
+            print(f"\n✅ {provider}:")
+            for model in models:
+                print(f"   - {model}")
+        else:
+            print(f"\n❌ {provider}: No working models")
+
+if __name__ == "__main__":
+    asyncio.run(main())
