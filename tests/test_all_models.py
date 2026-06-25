@@ -34,3 +34,15 @@ async def test_model(provider_name, model):
         error_msg = str(e)[:80]
         print(f"❌ {provider_name}/{model} FAILED: {error_msg}")
         return False, error_msg
+
+async def main():
+    print("🔍 TESTING ALL PROVIDERS AND MODELS...\n")
+    working = {}
+    
+    for provider, models in PROVIDERS_MODELS.items():
+        working[provider] = []
+        for model in models:
+            success, msg = await test_model(provider, model)
+            if success:
+                working[provider].append(model)
+            await asyncio.sleep(1)  # Задержка чтобы не банить
