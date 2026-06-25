@@ -245,3 +245,6 @@ class ConfigManager:
             return AppConfig.from_dict(data)
         except Exception:
             return AppConfig()
+        
+    def list_backups(self) -> list[Path]:
+        return sorted(self._backup_path.glob("config_*.json"))
