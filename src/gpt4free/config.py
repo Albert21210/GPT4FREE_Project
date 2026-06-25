@@ -177,3 +177,12 @@ class AppConfig:
         })
         data.setdefault("profiles", {})
         return data
+    
+
+class ConfigManager:
+
+    def __init__(self, app_name: str = APP_NAME):
+        self.app_name = app_name
+        self._config_path = self._get_config_path()
+        self._backup_path = self._config_path.parent / "config.backups"
+        self._backup_path.mkdir(parents=True, exist_ok=True)
