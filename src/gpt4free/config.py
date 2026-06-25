@@ -248,3 +248,10 @@ class ConfigManager:
         
     def list_backups(self) -> list[Path]:
         return sorted(self._backup_path.glob("config_*.json"))
+    
+    def rollback(self, backup_name: str) -> None:
+        backup_path = self._backup_path / backup_name
+        if not backup_path.exists():
+            raise FileNotFoundError(f"Backup '{backup_name}' not found")
+
+        backup_path.copy(self._config_path)
