@@ -186,3 +186,8 @@ class ConfigManager:
         self._config_path = self._get_config_path()
         self._backup_path = self._config_path.parent / "config.backups"
         self._backup_path.mkdir(parents=True, exist_ok=True)
+
+    def _get_config_path(self) -> Path:
+        path = Path(user_config_dir(self.app_name))
+        path.mkdir(parents=True, exist_ok=True)
+        return path / "config.json"
