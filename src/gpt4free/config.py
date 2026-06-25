@@ -191,3 +191,16 @@ class ConfigManager:
         path = Path(user_config_dir(self.app_name))
         path.mkdir(parents=True, exist_ok=True)
         return path / "config.json"
+    
+    def _backup_current(self) -> None:
+        if not self._config_path.exists():
+            return
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_file = self._backup_path / f"config_{timestamp}.json"
+        self._config_path.copy(backup_file)
+
+        # Keep only last 10 backups
+        backups = sorted(self._backup_path.glob("config_*.json"))
+        for old_backup in backups[:-10]:
+            old_backup.unlink()
