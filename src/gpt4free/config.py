@@ -204,6 +204,21 @@ class ConfigManager:
             return AppConfig.from_dict(data)
         except (json.JSONDecodeError, ValueError, TypeError):
             return self._recover_from_backup()
+        
+    def save(self, config: AppConfig) -> None:
+        self._backup_current()
+
+        temp_path = self._config_path.with_suffix(".tmp")
+        try:
+            temp_path.write_text(
+                json.dumps(config.to_dict(), indent=2, ensure_ascii=False),
+                encoding="utf-8"
+            )
+            temp_path.replace(self._config_path)
+        except Exception:
+            if temp_path.exists():
+                temp_path.unlink()
+            raise
     
     def _backup_current(self) -> None:
         if not self._config_path.exists():
