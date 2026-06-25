@@ -9,3 +9,10 @@ PROVIDERS_MODELS = {
     "DeepInfraChat": ["meta-llama/Meta-Llama-3.1-70B-Instruct", "meta-llama/Meta-Llama-3.1-8B-Instruct", "mistralai/Mistral-7B-Instruct-v0.3"],
     "DuckDuckGo": ["gpt-4o-mini", "claude-3-haiku", "llama-3.3-70b", "mixtral-8x7b"],
 }
+
+
+async def test_model(provider_name, model):
+    try:
+        provider = getattr(g4f.Provider, provider_name, None)
+        if not provider:
+            return False, "Provider not found"
