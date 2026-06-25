@@ -204,3 +204,16 @@ class ConfigManager:
         backups = sorted(self._backup_path.glob("config_*.json"))
         for old_backup in backups[:-10]:
             old_backup.unlink()
+
+    def _recover_from_backup(self) -> AppConfig:
+        backups = sorted(self._backup_path.glob("config_*.json"))
+        if not backups:
+            return AppConfig()
+
+        latest = backups[-1]
+        try:
+            raw = latest.read_text(encoding="utf-8")
+            data = json.loads(raw)
+            return AppConfig.from_dict(data)
+        except Exception:
+            return AppConfig()
