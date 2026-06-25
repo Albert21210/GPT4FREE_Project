@@ -30,3 +30,7 @@ async def test_model(provider_name, model):
             print(f"✅ {provider_name}/{model} WORKS!")
             return True, str(response)[:50]
         return False, "Empty response"
+    except Exception as e:
+        error_msg = str(e)[:80]
+        print(f"❌ {provider_name}/{model} FAILED: {error_msg}")
+        return False, error_msg
