@@ -139,6 +139,18 @@ class AppConfig:
         data.pop("_meta", None)
         return hashlib.md5(json.dumps(data, sort_keys=True).encode()).hexdigest()[:8]
     
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        if "version" not in data:
+            data = cls._migrate_v1_to_v2(data)
+
+        cls._validate(data)
+
+        known = set(cls.__dataclass_fields__)
+        filtered = {k: v for k, v in data.items() if k in known}
+
+        return cls(**filtered)
+    
     @staticmethod
     def _validate(data: dict[str, Any]) -> None:
         try:
