@@ -16,3 +16,17 @@ async def test_model(provider_name, model):
         provider = getattr(g4f.Provider, provider_name, None)
         if not provider:
             return False, "Provider not found"
+
+        print(f"Testing {provider_name}/{model}...")
+        response = await asyncio.to_thread(
+            g4f.ChatCompletion.create,
+            model=model,
+            messages=[{"role": "user", "content": "Say just one word: ok"}],
+            provider=provider,
+            stream=False,
+            timeout=30,
+        )
+        if response and len(str(response)) > 0:
+            print(f"✅ {provider_name}/{model} WORKS!")
+            return True, str(response)[:50]
+        return False, "Empty response"
