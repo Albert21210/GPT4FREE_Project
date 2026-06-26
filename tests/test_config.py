@@ -109,3 +109,21 @@ class TestAppConfig:
         assert cfg.provider == "PollinationsAI"
         assert cfg.model == "openai"
         assert not hasattr(cfg, "unknown_future_key")
+
+    def test_migration_from_v1(self):
+        v1_data = {
+            "provider": "PollinationsAI",
+            "model": "openai",
+            "stream": True,
+            "syntax_theme": "monokai",
+            "max_history_items": 200,
+            "prompt_history": ["old", "history"]
+        }
+        cfg = AppConfig.from_dict(v1_data)
+        assert cfg.version == "2.0.0"
+        assert cfg.stats == {"total_queries": 0, "first_used": None, "last_used": None}
+
+    def test_invalid_config_raises_error(self):
+        invalid_data = {"provider": "PollinationsAI"}
+        with pytest.raises(ValueError):
+            AppConfig.from_dict(invalid_data)
