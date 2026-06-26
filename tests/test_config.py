@@ -41,3 +41,18 @@ class TestAppConfig:
             cfg.add_to_history(f"prompt {i}")
         assert len(cfg.prompt_history) == 5
         assert cfg.prompt_history[-1] == "prompt 9"
+
+    def test_stats_update(self):
+        cfg = AppConfig()
+        assert cfg.stats["total_queries"] == 0
+        cfg.add_to_history("test")
+        assert cfg.stats["total_queries"] == 1
+        assert "last_used" in cfg.stats
+        assert "first_used" in cfg.stats
+
+    def test_get_recent_history(self):
+        cfg = AppConfig()
+        for i in range(10):
+            cfg.add_to_history(f"prompt {i}")
+        recent = cfg.get_recent_history(3)
+        assert recent == ["prompt 7", "prompt 8", "prompt 9"]
