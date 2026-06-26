@@ -279,3 +279,9 @@ class ConfigManager:
 
         config = AppConfig()
         self.save(config)
+
+def load_config() -> AppConfig:
+    return ConfigManager().load()
+
+def save_config(cfg: AppConfig) -> None:
+    ConfigManager().save(cfg)
