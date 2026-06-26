@@ -83,3 +83,29 @@ class TestAppConfig:
         assert cfg.provider == "PollinationsAI"
         assert cfg.model == "openai"
         assert cfg.active_profile == "work"
+
+    def test_to_dict_roundtrip(self):
+        cfg = AppConfig(provider="PollinationsAI", model="openai")
+        cfg.add_to_history("test")
+        d = cfg.to_dict()
+
+        assert d["version"] == "2.0.0"
+        assert "_meta" in d
+        assert "config_hash" in d["_meta"]
+
+        restored = AppConfig.from_dict(d)
+        assert restored.provider == cfg.provider
+        assert restored.model == cfg.model
+        assert restored.prompt_history == cfg.prompt_history
+
+    def test_from_dict_ignores_unknown_keys(self):
+        d = {
+            "provider": "PollinationsAI",
+            "model": "openai",
+            "unknown_future_key": 99,
+            "another_unknown": "value"
+        }
+        cfg = AppConfig.from_dict(d)
+        assert cfg.provider == "PollinationsAI"
+        assert cfg.model == "openai"
+        assert not hasattr(cfg, "unknown_future_key")
