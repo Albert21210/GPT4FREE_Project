@@ -262,3 +262,12 @@ class ConfigManager:
             json.dumps(config.to_dict(), indent=2, ensure_ascii=False),
             encoding="utf-8"
         )
+
+    def import_config(self, path: Path) -> None:
+        if not path.exists():
+            raise FileNotFoundError(f"Config file '{path}' not found")
+
+        raw = path.read_text(encoding="utf-8")
+        data = json.loads(raw)
+        config = AppConfig.from_dict(data)
+        self.save(config)
