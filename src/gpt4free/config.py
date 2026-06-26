@@ -271,3 +271,11 @@ class ConfigManager:
         data = json.loads(raw)
         config = AppConfig.from_dict(data)
         self.save(config)
+
+    def reset(self) -> None:
+        if self._config_path.exists():
+            self._backup_current()
+            self._config_path.unlink()
+
+        config = AppConfig()
+        self.save(config)
