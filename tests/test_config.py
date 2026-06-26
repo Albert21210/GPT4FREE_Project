@@ -70,3 +70,16 @@ class TestAppConfig:
         cfg.add_to_history("test")
         cfg.clear_history()
         assert cfg.prompt_history == []
+
+    def test_profile_management(self):
+        cfg = AppConfig(provider="PollinationsAI", model="openai")
+        cfg.save_profile("work")
+        cfg.save_profile("personal")
+
+        cfg.provider = "ChatGptEs"
+        cfg.model = "gpt-4o"
+
+        cfg.load_profile("work")
+        assert cfg.provider == "PollinationsAI"
+        assert cfg.model == "openai"
+        assert cfg.active_profile == "work"
