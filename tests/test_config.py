@@ -127,3 +127,11 @@ class TestAppConfig:
         invalid_data = {"provider": "PollinationsAI"}
         with pytest.raises(ValueError):
             AppConfig.from_dict(invalid_data)
+
+
+class TestConfigManager:
+
+    @pytest.fixture
+    def temp_config_dir(self, tmp_path):
+        with patch("gpt4free.config.user_config_dir", return_value=str(tmp_path)):
+            yield tmp_path
