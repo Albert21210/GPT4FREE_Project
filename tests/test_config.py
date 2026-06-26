@@ -56,3 +56,17 @@ class TestAppConfig:
             cfg.add_to_history(f"prompt {i}")
         recent = cfg.get_recent_history(3)
         assert recent == ["prompt 7", "prompt 8", "prompt 9"]
+
+    def test_search_history(self):
+        cfg = AppConfig()
+        prompts = ["hello world", "test hello", "goodbye"]
+        for p in prompts:
+            cfg.add_to_history(p)
+        results = cfg.search_history("hello")
+        assert results == ["test hello", "hello world"]
+
+    def test_clear_history(self):
+        cfg = AppConfig()
+        cfg.add_to_history("test")
+        cfg.clear_history()
+        assert cfg.prompt_history == []
