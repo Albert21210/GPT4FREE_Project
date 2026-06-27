@@ -228,7 +228,6 @@ class ConfigManager:
         backup_file = self._backup_path / f"config_{timestamp}.json"
         self._config_path.copy(backup_file)
 
-        # Keep only last 10 backups
         backups = sorted(self._backup_path.glob("config_*.json"))
         for old_backup in backups[:-10]:
             old_backup.unlink()
