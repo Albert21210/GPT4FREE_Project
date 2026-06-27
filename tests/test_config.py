@@ -135,3 +135,25 @@ class TestConfigManager:
     def temp_config_dir(self, tmp_path):
         with patch("gpt4free.config.user_config_dir", return_value=str(tmp_path)):
             yield tmp_path
+
+    def test_save_and_load(self, temp_config_dir):
+        mgr = ConfigManager()
+        cfg = AppConfig(provider="PollinationsAI", model="openai")
+        cfg.add_to_history("test prompt")
+
+        mgr.save(cfg)
+        loaded = mgr.load()
+
+        assert loaded.provider == "PollinationsAI"
+        assert loaded.model == "openai"
+        assert "test prompt" in loaded.prompt_history
+
+    def test_corrupted_config_recovery(self, temp_config_dir):
+        mgr = ConfigManager()
+        config_path = mgr._config_path
+
+        config_path.write_text("{ this is not json }", encoding="utf-8")
+
+        cfg = mgr.load()
+        assert cfg.provider == DEFAULT_PROVIDER
+        assert cfg.model == DEFAULT_MODEL
