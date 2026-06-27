@@ -157,3 +157,26 @@ class TestConfigManager:
         cfg = mgr.load()
         assert cfg.provider == DEFAULT_PROVIDER
         assert cfg.model == DEFAULT_MODEL
+
+    def test_backup_created_on_save(self, temp_config_dir):
+        mgr = ConfigManager()
+        cfg = AppConfig()
+
+        mgr.save(cfg)
+        backups = list(mgr._backup_path.glob("config_*.json"))
+        assert len(backups) == 0
+
+        mgr.save(cfg)
+        backups = list(mgr._backup_path.glob("config_*.json"))
+        assert len(backups) >= 1
+
+    def test_backup_limit(self, temp_config_dir):
+        mgr = ConfigManager()
+        cfg = AppConfig()
+
+        for i in range(15):
+            cfg.provider = f"Provider{i}"
+            mgr.save(cfg)
+
+        backups = list(mgr._backup_path.glob("config_*.json"))
+        assert len(backups) <= 10
