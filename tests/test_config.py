@@ -180,3 +180,47 @@ class TestConfigManager:
 
         backups = list(mgr._backup_path.glob("config_*.json"))
         assert len(backups) <= 10
+
+    def test_export_import(self, temp_config_dir):
+        mgr = ConfigManager()
+        cfg = AppConfig(provider="PollinationsAI", model="openai")
+        mgr.save(cfg)
+
+        export_path = temp_config_dir / "exported.json"
+        mgr.export(export_path)
+
+        new_cfg = AppConfig(provider="ChatGptEs", model="gpt-4o")
+        mgr.save(new_cfg)
+        mgr.import_config(export_path)
+
+        loaded = mgr.load()
+        assert loaded.provider == "PollinationsAI"
+        assert loaded.model == "openai"
+
+    def test_reset(self, temp_config_dir):
+        mgr = ConfigManager()
+        cfg = AppConfig(provider="Custom", model="custom")
+        mgr.save(cfg)
+
+        mgr.reset()
+        loaded = mgr.load()
+        assert loaded.provider == DEFAULT_PROVIDER
+        assert loaded.model == DEFAULT_MODEL
+
+    def test_rollback(self, temp_config_dir):
+        mgr = ConfigManager()
+
+        cfg1 = AppConfig(provider="Provider1", model="model1")
+        mgr.save(cfg1)
+        mgr.save(cfg1)
+
+        backups = mgr.list_backups()
+        assert len(backups) >= 1
+        backup_name = backups[0].name
+
+        cfg2 = AppConfig(provider="Provider2", model="model2")
+        mgr.save(cfg2)
+
+        mgr.rollback(backup_name)
+        loaded = mgr.load()
+        assert loaded.provider == "Provider1"
