@@ -153,3 +153,8 @@ def cmd_config(
     import json
 
     cfg = load_config()
+
+    if provider:
+        cfg.provider = provider
+        save_config(cfg)
+        console.print(f"[green]✓[/green] Provider set to [bold]{provider}[/bold]")
