@@ -113,3 +113,5 @@ def render_provider_table(providers: list[object]) -> None:  # ProviderInfo
             lat,
             preview,
         )
+        
+    _console.print(table)
