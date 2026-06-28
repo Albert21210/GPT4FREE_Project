@@ -23,3 +23,7 @@ def render_markdown(text: str, theme: str = "monokai") -> None:
         before = text[last : m.start()]
         if before.strip():
             parts.append((before, None, None))
+        lang = m.group(1) or "text"
+        code = m.group(2)
+        parts.append(("", lang, code))
+        last = m.end()
