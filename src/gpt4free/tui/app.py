@@ -241,3 +241,17 @@ class GPT4FREETUI(App[None]):
             f"  ·  model: [bold]{self._session.model}[/bold]"
         )
         log.sys("Type [bold]/help[/bold] to see available commands.")
+
+    # ── Input ─────────────────────────────────────────────────────────────────
+
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
+        text = event.value.strip()
+        if not text or self._busy:
+            return
+        event.input.value = ""
+        self._hist_idx = -1
+
+        if text.startswith("/"):
+            await self._handle_command(text)
+        else:
+            self._do_chat(text)
