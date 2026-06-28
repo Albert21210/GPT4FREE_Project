@@ -201,3 +201,13 @@ class GPT4FREETUI(App[None]):
         self._busy = False
         self._history: list[str] = list(cfg.prompt_history)
         self._hist_idx: int = -1
+
+    # ── Composition ───────────────────────────────────────────────────────────
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="banner-wrap"):
+            yield Static(BANNER, id="banner")
+            yield Static(
+                "Free GPT-4 access · No API key · /help for commands",
+                id="banner-sub",
+            )
