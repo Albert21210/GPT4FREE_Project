@@ -71,3 +71,8 @@ class ChatLog(Widget):
                 scroller.scroll_end(animate=False)  # type: ignore[union-attr]
         except Exception:  # noqa: BLE001
             pass
+
+    @staticmethod
+    def _escape(text: str) -> str:
+        """Escape Rich markup characters in raw model output."""
+        return text.replace("[", r"\[")
