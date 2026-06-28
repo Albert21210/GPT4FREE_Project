@@ -141,3 +141,11 @@ def cmd_status(
     from gpt4free.render import render_provider_table
 
     render_provider_table(results)
+
+@app.command("config")
+def cmd_config(
+    show: Annotated[bool, typer.Option("--show", help="Print current config")] = False,
+    provider: Annotated[Optional[str], typer.Option("--provider", "-P")] = None,
+    model: Annotated[Optional[str], typer.Option("--model", "-m")] = None,
+) -> None:
+    """View or update saved configuration."""
