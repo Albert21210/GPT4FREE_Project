@@ -7,3 +7,9 @@ Usage examples:
   gpt4free providers                # list all providers
   gpt4free status                   # probe & display provider status
 """
+
+from __future__ import annotations
+
+import asyncio
+import sys
+from typing import Annotated, Optional
