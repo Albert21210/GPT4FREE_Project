@@ -76,3 +76,14 @@ def main(
             cfg.model = model
 
         GPT4FREETUI(cfg).run()
+
+@app.command("providers")
+def cmd_providers(
+    verbose: Annotated[
+        bool,
+        typer.Option("--verbose", "-v", help="Show all models per provider"),
+    ] = False,
+) -> None:
+    """List all available providers and their models."""
+    from rich.table import Table
+    from gpt4free.providers import list_providers, STATUS_COLOR, STATUS_EMOJI
