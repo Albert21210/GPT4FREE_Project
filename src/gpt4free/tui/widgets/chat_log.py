@@ -63,3 +63,11 @@ class ChatLog(Widget):
         """Mount an arbitrary Static widget."""
         self.mount(widget)
         self._scroll_end()
+
+    def _scroll_end(self) -> None:
+        try:
+            scroller = self.parent
+            if scroller is not None:
+                scroller.scroll_end(animate=False)  # type: ignore[union-attr]
+        except Exception:  # noqa: BLE001
+            pass
