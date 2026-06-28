@@ -121,3 +121,16 @@ class ModelPickerScreen(ModalScreen[Optional[str]]):
 
     def action_dismiss_none(self) -> None:
         self.dismiss(None)
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        q = event.value.lower()
+        lv = self.query_one("#lst", ListView)
+        lv.clear()
+        for m in self._models:
+            if q in m.display.lower() or q in m.alias.lower():
+                lv.append(
+                    ListItem(
+                        Label(f"◆ [bold]{m.display}[/bold]  [dim]{m.alias}[/dim]"),
+                        name=m.alias,
+                    )
+                )
