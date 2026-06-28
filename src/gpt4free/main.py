@@ -43,6 +43,10 @@ def main(
         Optional[str],
         typer.Option("--model", "-m", help="Override model"),
     ] = None,
+      no_stream: Annotated[
+        bool,
+        typer.Option("--no-stream", help="Disable streaming (print all at once)"),
+    ] = False,
 ) -> None:
     """Launch TUI, or use [bold]-p[/bold] for a single CLI prompt."""
     if ctx.invoked_subcommand is not None:
