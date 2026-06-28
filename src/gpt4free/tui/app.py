@@ -385,3 +385,6 @@ class GPT4FREETUI(App[None]):
             save_config(self._cfg)
 
         await self.push_screen(ModelPickerScreen(model_list), _on_pick)
+
+    async def action_show_status(self) -> None:
+        await self.push_screen(StatusScreen())
