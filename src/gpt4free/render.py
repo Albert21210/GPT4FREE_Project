@@ -42,3 +42,5 @@ def render_markdown(text: str, theme: str = "monokai") -> None:
                 word_wrap=True,
             )
             _console.print(syntax)
+        else:
+            _console.print(Markdown(content))
