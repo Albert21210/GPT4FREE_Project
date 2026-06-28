@@ -181,3 +181,6 @@ def _cli_prompt(
         render_stream_chunk,
         render_user_prompt,
     )
+
+    render_user_prompt(text)
+    render_assistant_header(provider, model)
