@@ -54,3 +54,7 @@ def main(
 
     from gpt4free.config import load_config, save_config
     from gpt4free.providers import get_provider_info
+
+    cfg = load_config()
+    effective_provider = provider or cfg.provider
+    effective_model = model or cfg.model
