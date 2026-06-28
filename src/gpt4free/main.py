@@ -24,3 +24,11 @@ app = typer.Typer(
     add_completion=False,
     rich_markup_mode="rich",
 )
+
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+) -> None:
+    """Launch TUI, or use [bold]-p[/bold] for a single CLI prompt."""
+    if ctx.invoked_subcommand is not None:
+        return
