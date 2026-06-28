@@ -394,3 +394,9 @@ class GPT4FREETUI(App[None]):
         log = self.query_one(ChatLog)
         log.remove_children()
         log.sys("🗑  Conversation cleared.")
+
+    def action_new_session(self) -> None:
+        self._session.clear()
+        log = self.query_one(ChatLog)
+        log.remove_children()
+        log.sys("✨  New session started.")
