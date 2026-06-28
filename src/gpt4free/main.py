@@ -95,3 +95,7 @@ def cmd_providers(
         header_style="bold #6c63ff",
         show_lines=True,
     )
+    table.add_column("Provider", style="bold white", min_width=14)
+    table.add_column("Status", min_width=12)
+    table.add_column("# Models", justify="right", min_width=8)
+    table.add_column("Models", min_width=50 if verbose else 40)
