@@ -134,3 +134,6 @@ class ModelPickerScreen(ModalScreen[Optional[str]]):
                         name=m.alias,
                     )
                 )
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        self.dismiss(event.item.name)
