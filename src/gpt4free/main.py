@@ -89,3 +89,9 @@ def cmd_providers(
     from gpt4free.providers import list_providers, STATUS_COLOR, STATUS_EMOJI
 
     infos = list_providers()
+    table = Table(
+        title="[bold #6c63ff]GPT4FREE — Providers[/bold #6c63ff]",
+        border_style="#1a1d2e",
+        header_style="bold #6c63ff",
+        show_lines=True,
+    )
