@@ -388,3 +388,9 @@ class GPT4FREETUI(App[None]):
 
     async def action_show_status(self) -> None:
         await self.push_screen(StatusScreen())
+
+    def action_clear_chat(self) -> None:
+        self._session.clear()
+        log = self.query_one(ChatLog)
+        log.remove_children()
+        log.sys("🗑  Conversation cleared.")
