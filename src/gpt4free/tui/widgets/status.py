@@ -15,3 +15,32 @@ from gpt4free.providers import (
     list_providers,
     probe_all,
 )
+
+
+_CSS = """
+StatusScreen {
+    align: center middle;
+    background: #00000099;
+}
+.ov-box {
+    width: 94%;
+    height: 88%;
+    border: round #6c63ff;
+    background: #0d0f17;
+    padding: 1 2;
+}
+.ov-title {
+    color: #6c63ff;
+    text-style: bold;
+    border-bottom: solid #1a1d2e;
+    padding-bottom: 1;
+    margin-bottom: 1;
+}
+DataTable {
+    background: #0a0c14;
+    border: solid #1a1d2e;
+    height: 1fr;
+}
+DataTable > .datatable--header { background: #12152a; color: #6c63ff; text-style: bold; }
+DataTable > .datatable--cursor { background: #1a1d40; }
+"""
