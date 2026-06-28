@@ -211,3 +211,7 @@ class GPT4FREETUI(App[None]):
                 "Free GPT-4 access · No API key · /help for commands",
                 id="banner-sub",
             )
+
+        scroll = ScrollableContainer(ChatLog(id="chat-log"), id="chat-scroll")
+        scroll.border_title = " conversation "
+        yield scroll
