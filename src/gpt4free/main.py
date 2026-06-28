@@ -199,5 +199,9 @@ def _cli_prompt(
             return collected
 
         asyncio.run(_run())
-        console.print()  # final newline
+        console.print() 
         render_markdown(collected)
+    else:
+        with console.status("[dim]Thinking…[/dim]", spinner="dots"):
+            reply = asyncio.run(session.ask_once())
+        render_markdown(reply)
