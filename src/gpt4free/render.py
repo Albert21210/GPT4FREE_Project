@@ -98,3 +98,9 @@ def render_provider_table(providers: list[object]) -> None:  # ProviderInfo
     table.add_column("Status", min_width=14)
     table.add_column("Latency", justify="right", min_width=8)
     table.add_column("Models", min_width=40)
+
+    for p in providers:
+        assert isinstance(p, ProviderInfo)
+        emoji = STATUS_EMOJI.get(p.status, "?")
+        color = STATUS_COLOR.get(p.status, "white")
+        lat = f"{p.latency_ms}ms" if p.latency_ms is not None else "‚ÄĒ"
