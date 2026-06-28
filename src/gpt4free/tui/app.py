@@ -215,3 +215,11 @@ class GPT4FREETUI(App[None]):
         scroll = ScrollableContainer(ChatLog(id="chat-log"), id="chat-scroll")
         scroll.border_title = " conversation "
         yield scroll
+
+        with Vertical(id="input-area"):
+            with Horizontal(id="input-row"):
+                yield Label("›", id="caret")
+                yield Input(
+                    placeholder="Ask anything…  (/help for commands)",
+                    id="prompt",
+                )
