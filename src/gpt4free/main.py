@@ -184,3 +184,6 @@ def _cli_prompt(
 
     render_user_prompt(text)
     render_assistant_header(provider, model)
+
+    session = ChatSession(provider=provider, model=model)
+    session.push_user(text)
