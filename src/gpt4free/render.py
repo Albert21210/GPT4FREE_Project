@@ -52,3 +52,10 @@ def render_stream_chunk(chunk: str) -> None:
 def render_user_prompt(text: str) -> None:
     """Print the echoed user prompt."""
     _console.print(f"[bold #6c63ff]You ‚Äļ[/bold #6c63ff] {text}")
+
+def render_assistant_header(provider: str, model: str) -> None:
+    """Print the assistant label line."""
+    _console.print(
+        f"\n[bold #00cc66]GPT4FREE[/bold #00cc66] "
+        f"[dim]({provider} / {model})[/dim]"
+    )
