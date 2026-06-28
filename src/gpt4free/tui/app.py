@@ -323,3 +323,17 @@ class GPT4FREETUI(App[None]):
 
         self._busy = True
         self._refresh_status()
+
+        bot_widget = log.bot_placeholder()
+        collected = ""
+
+        try:
+            async for chunk in self._session.ask_stream():
+                collected += chunk
+                log.update_bot(bot_widget, collected)
+        except Exception as exc:  # noqa: BLE001
+            log.error(str(exc))
+        finally:
+            self._session.push_assistant(collected)
+            self._busy = False
+            self._refresh_status()
