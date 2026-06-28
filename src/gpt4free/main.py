@@ -117,3 +117,12 @@ def cmd_providers(
         )
 
     console.print(table)
+
+@app.command("status")
+def cmd_status(
+    timeout: Annotated[
+        float,
+        typer.Option("--timeout", "-t", help="Probe timeout per provider (seconds)"),
+    ] = 12.0,
+) -> None:
+    """Probe all providers and display live status."""
