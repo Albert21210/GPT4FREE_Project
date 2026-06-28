@@ -300,3 +300,9 @@ class GPT4FREETUI(App[None]):
 
         elif base in ("/new", "/n"):
             self.action_new_session()
+
+        elif base in ("/exit", "/quit", "/q"):
+            self.action_quit()
+
+        else:
+            log.error(f"Unknown command: {cmd}  — type /help for list")
