@@ -68,3 +68,20 @@ class StatusScreen(ModalScreen[None]):
 
     def on_mount(self) -> None:
         self._fill(list_providers())
+
+    def _fill(self, infos: list[ProviderInfo]) -> None:
+        tbl = self.query_one("#tbl", DataTable)
+        tbl.clear()
+        for p in infos:
+            color = STATUS_COLOR.get(p.status, "white")
+            emoji = STATUS_EMOJI.get(p.status, "?")
+            lat = f"{p.latency_ms}ms" if p.latency_ms is not None else "—"
+            preview = ", ".join(m.display for m in p.model_list[:4])
+            if len(p.model_list) > 4:
+                preview += f" +{len(p.model_list) - 4}"
+            tbl.add_row(
+                p.name,
+                f"[{color}]{emoji} {p.status.value}[/{color}]",
+                lat,
+                preview,
+            )
