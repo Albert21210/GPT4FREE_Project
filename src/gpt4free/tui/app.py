@@ -291,3 +291,12 @@ class GPT4FREETUI(App[None]):
 
         elif base == "/model":
             await self.action_pick_model()
+
+        elif base == "/status":
+            await self.action_show_status()
+
+        elif base in ("/clear", "/c"):
+            self.action_clear_chat()
+
+        elif base in ("/new", "/n"):
+            self.action_new_session()
