@@ -44,3 +44,7 @@ def render_markdown(text: str, theme: str = "monokai") -> None:
             _console.print(syntax)
         else:
             _console.print(Markdown(content))
+
+def render_stream_chunk(chunk: str) -> None:
+    """Print a raw streaming chunk without newline."""
+    _console.print(chunk, end="", highlight=False)
