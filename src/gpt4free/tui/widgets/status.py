@@ -85,3 +85,10 @@ class StatusScreen(ModalScreen[None]):
                 lat,
                 preview,
             )
+
+    async def action_probe(self) -> None:
+        tbl = self.query_one("#tbl", DataTable)
+        tbl.clear()
+        tbl.add_row("Probing all providers…", "", "", "")
+        infos = await probe_all(list_providers())
+        self._fill(infos)
