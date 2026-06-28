@@ -13,3 +13,6 @@ from __future__ import annotations
 import asyncio
 import sys
 from typing import Annotated, Optional
+
+import typer
+from rich.console import Console
