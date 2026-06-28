@@ -255,3 +255,24 @@ class GPT4FREETUI(App[None]):
             await self._handle_command(text)
         else:
             self._do_chat(text)
+
+    def on_key(self, event: object) -> None:
+        from textual.events import Key
+
+        if not isinstance(event, Key):
+            return
+        inp = self.query_one("#prompt", Input)
+
+        if event.key == "up":
+            if self._history:
+                self._hist_idx = min(self._hist_idx + 1, len(self._history) - 1)
+                inp.value = self._history[-(self._hist_idx + 1)]
+                inp.cursor_position = len(inp.value)
+        elif event.key == "down":
+            if self._hist_idx > 0:
+                self._hist_idx -= 1
+                inp.value = self._history[-(self._hist_idx + 1)]
+                inp.cursor_position = len(inp.value)
+            elif self._hist_idx == 0:
+                self._hist_idx = -1
+                inp.value = ""
