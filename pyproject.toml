@@ -38,6 +38,19 @@ dev-dependencies = [
     "mypy>=1.10.0",
 ]
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --cov=src/gpt4free --cov-report=term-missing --cov-report=html"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: unit tests",
+]
+
+[tool.pytest-benchmark]
+group_by = "group"
+
 [tool.coverage.run]
 source = ["src/gpt4free"]
 omit = ["tests/*"]
