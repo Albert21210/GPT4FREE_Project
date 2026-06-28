@@ -126,3 +126,8 @@ def cmd_status(
     ] = 12.0,
 ) -> None:
     """Probe all providers and display live status."""
+    from gpt4free.providers import list_providers, probe_all, PROBE_TIMEOUT
+    import gpt4free.providers as prov_mod
+
+    prov_mod.PROBE_TIMEOUT = timeout
+    providers = list_providers()
