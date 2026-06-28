@@ -197,3 +197,7 @@ def _cli_prompt(
                 render_stream_chunk(chunk)
                 collected += chunk
             return collected
+
+        asyncio.run(_run())
+        console.print()  # final newline
+        render_markdown(collected)
