@@ -137,3 +137,7 @@ def cmd_status(
         spinner="dots",
     ):
         results = asyncio.run(probe_all(providers))
+
+    from gpt4free.render import render_provider_table
+
+    render_provider_table(results)
