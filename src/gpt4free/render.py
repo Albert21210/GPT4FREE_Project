@@ -17,7 +17,7 @@ def render_markdown(text: str, theme: str = "monokai") -> None:
     """Render Markdown text with syntax-highlighted code blocks to stdout."""
     pattern = re.compile(r"```(\w*)\n(.*?)```", re.DOTALL)
     last = 0
-    parts: list[tuple[str, Optional[str], Optional[str]]] = []
+    parts: list[tuple[str, Optional[str], Optional[str]]] = []  
 
     for m in pattern.finditer(text):
         before = text[last : m.start()]
@@ -51,7 +51,7 @@ def render_stream_chunk(chunk: str) -> None:
 
 def render_user_prompt(text: str) -> None:
     """Print the echoed user prompt."""
-    _console.print(f"[bold #6c63ff]You ‚Äļ[/bold #6c63ff] {text}")
+    _console.print(f"[bold #6c63ff]You ›[/bold #6c63ff] {text}")
 
 def render_assistant_header(provider: str, model: str) -> None:
     """Print the assistant label line."""
@@ -79,17 +79,17 @@ def render_banner() -> None:
   ╚═════╝ ╚═╝        ╚═╝        ╚═╝╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝[/bold #6c63ff]"""
     _console.print(banner)
     _console.print(
-        "[dim]  Free GPT-4 access ¬∑ No API key ¬∑ "
+        "[dim]  Free GPT-4 access · No API key · "
         "Type [bold]/help[/bold] for commands[/dim]\n"
     )
 
-def render_provider_table(providers: list[object]) -> None:  # ProviderInfo
+def render_provider_table(providers: list[object]) -> None:  
     """Print a Rich table of all providers and their status."""
     from rich.table import Table
     from gpt4free.providers import ProviderInfo, STATUS_COLOR, STATUS_EMOJI
 
     table = Table(
-        title="[bold #6c63ff]GPT4FREE ‚ÄĒ Provider Status[/bold #6c63ff]",
+        title="[bold #6c63ff]GPT4FREE — Provider Status[/bold #6c63ff]",
         border_style="#1e1e3a",
         header_style="bold #6c63ff",
         show_lines=True,
@@ -103,7 +103,7 @@ def render_provider_table(providers: list[object]) -> None:  # ProviderInfo
         assert isinstance(p, ProviderInfo)
         emoji = STATUS_EMOJI.get(p.status, "?")
         color = STATUS_COLOR.get(p.status, "white")
-        lat = f"{p.latency_ms}ms" if p.latency_ms is not None else "‚ÄĒ"
+        lat = f"{p.latency_ms}ms" if p.latency_ms is not None else "—"
         preview = ", ".join(m.display for m in p.model_list[:4])
         if len(p.model_list) > 4:
             preview += f" +{len(p.model_list) - 4}"
@@ -113,5 +113,5 @@ def render_provider_table(providers: list[object]) -> None:  # ProviderInfo
             lat,
             preview,
         )
-        
+
     _console.print(table)
