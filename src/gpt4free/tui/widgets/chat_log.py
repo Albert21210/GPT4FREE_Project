@@ -34,3 +34,10 @@ class ChatLog(Widget):
         self.mount(w)
         self._scroll_end()
         return w
+
+    def update_bot(self, widget: Static, text: str) -> None:
+        """Replace the content of a bot placeholder with streamed text."""
+        widget.update(
+            f"[bold #00cc66]GPT4FREE[/bold #00cc66]\n{self._escape(text)}"
+        )
+        self._scroll_end()
