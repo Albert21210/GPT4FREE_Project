@@ -103,3 +103,9 @@ def cmd_providers(
     for p in infos:
         emoji = STATUS_EMOJI.get(p.status, "?")
         color = STATUS_COLOR.get(p.status, "white")
+        if verbose:
+            preview = "\n".join(f"  {m.display} [{m.alias}]" for m in p.model_list)
+        else:
+            preview = ", ".join(m.display for m in p.model_list[:4])
+            if len(p.model_list) > 4:
+                preview += f" +{len(p.model_list) - 4}"
