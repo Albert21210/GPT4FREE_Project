@@ -104,3 +104,6 @@ def render_provider_table(providers: list[object]) -> None:  # ProviderInfo
         emoji = STATUS_EMOJI.get(p.status, "?")
         color = STATUS_COLOR.get(p.status, "white")
         lat = f"{p.latency_ms}ms" if p.latency_ms is not None else "‚ÄĒ"
+        preview = ", ".join(m.display for m in p.model_list[:4])
+        if len(p.model_list) > 4:
+            preview += f" +{len(p.model_list) - 4}"
