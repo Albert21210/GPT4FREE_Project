@@ -131,3 +131,9 @@ def cmd_status(
 
     prov_mod.PROBE_TIMEOUT = timeout
     providers = list_providers()
+
+    with console.status(
+        "[bold #6c63ff]Probing providers…[/bold #6c63ff]",
+        spinner="dots",
+    ):
+        results = asyncio.run(probe_all(providers))
