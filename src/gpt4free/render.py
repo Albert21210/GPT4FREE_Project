@@ -18,3 +18,8 @@ def render_markdown(text: str, theme: str = "monokai") -> None:
     pattern = re.compile(r"```(\w*)\n(.*?)```", re.DOTALL)
     last = 0
     parts: list[tuple[str, Optional[str], Optional[str]]] = []
+
+    for m in pattern.finditer(text):
+        before = text[last : m.start()]
+        if before.strip():
+            parts.append((before, None, None))
