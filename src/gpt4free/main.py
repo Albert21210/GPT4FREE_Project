@@ -158,3 +158,11 @@ def cmd_config(
         cfg.provider = provider
         save_config(cfg)
         console.print(f"[green]✓[/green] Provider set to [bold]{provider}[/bold]")
+
+    if model:
+        cfg.model = model
+        save_config(cfg)
+        console.print(f"[green]✓[/green] Model set to [bold]{model}[/bold]")
+
+    if show or (not provider and not model):
+        console.print_json(json.dumps(cfg.to_dict(), indent=2))
