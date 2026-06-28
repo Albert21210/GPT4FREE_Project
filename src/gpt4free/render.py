@@ -10,3 +10,5 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.text import Text
+
+_console = Console()
