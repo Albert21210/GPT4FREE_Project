@@ -175,3 +175,9 @@ def _cli_prompt(
 ) -> None:
     """Run a single prompt in the terminal with streaming output."""
     from gpt4free.chat import ChatSession
+    from gpt4free.render import (
+        render_assistant_header,
+        render_markdown,
+        render_stream_chunk,
+        render_user_prompt,
+    )
