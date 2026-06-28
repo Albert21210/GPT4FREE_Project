@@ -223,3 +223,10 @@ class GPT4FREETUI(App[None]):
                     placeholder="Ask anything…  (/help for commands)",
                     id="prompt",
                 )
+
+        with Horizontal(id="status-bar"):
+            yield Static(self._sb_left(), id="sb-left")
+            yield Static("GPT4FREE TUI", id="sb-mid")
+            yield Static("ctrl+p/m/s", id="sb-right")
+
+        yield Footer()
