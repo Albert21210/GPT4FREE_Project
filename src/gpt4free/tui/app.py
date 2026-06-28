@@ -285,3 +285,9 @@ class GPT4FREETUI(App[None]):
 
         if base == "/help":
             log.add_widget(Static(HELP_TEXT, classes="msg-help"))
+
+        elif base == "/provider":
+            await self.action_pick_provider()
+
+        elif base == "/model":
+            await self.action_pick_model()
