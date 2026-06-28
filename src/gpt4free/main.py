@@ -87,3 +87,5 @@ def cmd_providers(
     """List all available providers and their models."""
     from rich.table import Table
     from gpt4free.providers import list_providers, STATUS_COLOR, STATUS_EMOJI
+
+    infos = list_providers()
