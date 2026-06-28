@@ -58,3 +58,8 @@ class ChatLog(Widget):
         self.mount(w)
         self._scroll_end()
         return w
+
+    def add_widget(self, widget: Static) -> None:
+        """Mount an arbitrary Static widget."""
+        self.mount(widget)
+        self._scroll_end()
