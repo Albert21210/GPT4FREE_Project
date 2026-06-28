@@ -44,3 +44,13 @@ DataTable {
 DataTable > .datatable--header { background: #12152a; color: #6c63ff; text-style: bold; }
 DataTable > .datatable--cursor { background: #1a1d40; }
 """
+
+
+class StatusScreen(ModalScreen[None]):
+    """Shows provider status table; press R to probe all live."""
+
+    DEFAULT_CSS = _CSS
+    BINDINGS = [
+        ("escape", "dismiss", "Close"),
+        ("r",      "probe",   "Re-check all"),
+    ]
