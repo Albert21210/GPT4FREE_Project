@@ -51,3 +51,6 @@ def main(
     """Launch TUI, or use [bold]-p[/bold] for a single CLI prompt."""
     if ctx.invoked_subcommand is not None:
         return
+
+    from gpt4free.config import load_config, save_config
+    from gpt4free.providers import get_provider_info
