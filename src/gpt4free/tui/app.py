@@ -337,3 +337,28 @@ class GPT4FREETUI(App[None]):
             self._session.push_assistant(collected)
             self._busy = False
             self._refresh_status()
+
+    # ── Actions ───────────────────────────────────────────────────────────────
+
+    async def action_pick_provider(self) -> None:
+        infos = list_providers()
+
+        def _on_pick(name: Optional[str]) -> None:
+            if not name:
+                return
+            self._session.provider = name
+            for p in infos:
+                if p.name == name and p.model_list:
+                    self._session.model = p.model_list[0].alias
+                    break
+            self._refresh_status()
+            log = self.query_one(ChatLog)
+            log.sys(
+                f"✅  Provider → [bold]{self._session.provider}[/bold]"
+                f"  ·  model → [bold]{self._session.model}[/bold]"
+            )
+            self._cfg.provider = self._session.provider
+            self._cfg.model = self._session.model
+            save_config(self._cfg)
+
+        await self.push_screen(ProviderPickerScreen(infos), _on_pick)
