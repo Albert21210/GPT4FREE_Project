@@ -48,3 +48,21 @@ ListView > ListItem { color: #b0b0d0; padding: 0 1; }
 ListView > ListItem.--highlight { background: #1a1d40; color: #ffffff; }
 ListView > ListItem:hover { background: #141730; }
 """
+
+
+class ProviderPickerScreen(ModalScreen[Optional[str]]):
+    """Fuzzy-searchable provider selection modal."""
+
+    DEFAULT_CSS = _MODAL_CSS
+    BINDINGS = [("escape", "dismiss_none", "Cancel")]
+
+    def __init__(self, providers: list[ProviderInfo]) -> None:
+        super().__init__()
+        self._providers = providers
+
+    def _item_label(self, p: ProviderInfo) -> str:
+        emoji = STATUS_EMOJI.get(p.status, "?")
+        models_preview = ", ".join(m.display for m in p.model_list[:3])
+        if len(p.model_list) > 3:
+            models_preview += f" +{len(p.model_list) - 3}"
+        return f"{emoji} [bold]{p.name}[/bold]  [dim][{models_preview}][/dim]"
