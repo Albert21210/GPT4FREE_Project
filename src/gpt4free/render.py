@@ -48,3 +48,7 @@ def render_markdown(text: str, theme: str = "monokai") -> None:
 def render_stream_chunk(chunk: str) -> None:
     """Print a raw streaming chunk without newline."""
     _console.print(chunk, end="", highlight=False)
+
+def render_user_prompt(text: str) -> None:
+    """Print the echoed user prompt."""
+    _console.print(f"[bold #6c63ff]You ‚Äļ[/bold #6c63ff] {text}")
