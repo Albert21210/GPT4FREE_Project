@@ -39,6 +39,10 @@ def main(
         Optional[str],
         typer.Option("--provider", "-P", help="Override provider"),
     ] = None,
+      model: Annotated[
+        Optional[str],
+        typer.Option("--model", "-m", help="Override model"),
+    ] = None,
 ) -> None:
     """Launch TUI, or use [bold]-p[/bold] for a single CLI prompt."""
     if ctx.invoked_subcommand is not None:
