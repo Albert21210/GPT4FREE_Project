@@ -187,3 +187,13 @@ def _cli_prompt(
 
     session = ChatSession(provider=provider, model=model)
     session.push_user(text)
+
+    if stream:
+        collected = ""
+
+        async def _run() -> str:
+            nonlocal collected
+            async for chunk in session.ask_stream():
+                render_stream_chunk(chunk)
+                collected += chunk
+            return collected
