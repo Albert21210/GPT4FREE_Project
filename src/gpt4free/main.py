@@ -28,22 +28,22 @@ app = typer.Typer(
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-      prompt: Annotated[
+    prompt: Annotated[
         Optional[str],
         typer.Option(
             "--prompt", "-p",
             help="One-shot prompt (skip TUI, print response and exit)",
         ),
     ] = None,
-      provider: Annotated[
+    provider: Annotated[
         Optional[str],
         typer.Option("--provider", "-P", help="Override provider"),
     ] = None,
-      model: Annotated[
+    model: Annotated[
         Optional[str],
         typer.Option("--model", "-m", help="Override model"),
     ] = None,
-      no_stream: Annotated[
+    no_stream: Annotated[
         bool,
         typer.Option("--no-stream", help="Disable streaming (print all at once)"),
     ] = False,
@@ -66,7 +66,6 @@ def main(
             model=effective_model,
             stream=not no_stream,
         )
-
     else:
         from gpt4free.tui.app import GPT4FREETUI
 
@@ -199,7 +198,7 @@ def _cli_prompt(
             return collected
 
         asyncio.run(_run())
-        console.print() 
+        console.print()  
         render_markdown(collected)
     else:
         with console.status("[dim]Thinking…[/dim]", spinner="dots"):
