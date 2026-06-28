@@ -166,3 +166,12 @@ def cmd_config(
 
     if show or (not provider and not model):
         console.print_json(json.dumps(cfg.to_dict(), indent=2))
+
+def _cli_prompt(
+    text: str,
+    provider: str,
+    model: str,
+    stream: bool,
+) -> None:
+    """Run a single prompt in the terminal with streaming output."""
+    from gpt4free.chat import ChatSession
