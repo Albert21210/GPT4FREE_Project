@@ -12,3 +12,7 @@ from rich.syntax import Syntax
 from rich.text import Text
 
 _console = Console()
+
+def render_markdown(text: str, theme: str = "monokai") -> None:
+    """Render Markdown text with syntax-highlighted code blocks to stdout."""
+    pattern = re.compile(r"```(\w*)\n(.*?)```", re.DOTALL)
