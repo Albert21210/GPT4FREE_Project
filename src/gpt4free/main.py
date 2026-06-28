@@ -58,3 +58,11 @@ def main(
     cfg = load_config()
     effective_provider = provider or cfg.provider
     effective_model = model or cfg.model
+
+    if prompt:
+        _cli_prompt(
+            text=prompt,
+            provider=effective_provider,
+            model=effective_model,
+            stream=not no_stream,
+        )
