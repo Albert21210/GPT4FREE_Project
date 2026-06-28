@@ -99,3 +99,7 @@ def cmd_providers(
     table.add_column("Status", min_width=12)
     table.add_column("# Models", justify="right", min_width=8)
     table.add_column("Models", min_width=50 if verbose else 40)
+
+    for p in infos:
+        emoji = STATUS_EMOJI.get(p.status, "?")
+        color = STATUS_COLOR.get(p.status, "white")
