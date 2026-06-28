@@ -81,3 +81,11 @@ class ProviderPickerScreen(ModalScreen[Optional[str]]):
 
     def action_dismiss_none(self) -> None:
         self.dismiss(None)
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        q = event.value.lower()
+        lv = self.query_one("#lst", ListView)
+        lv.clear()
+        for p in self._providers:
+            if q in p.name.lower() or any(q in m.display.lower() for m in p.model_list):
+                lv.append(ListItem(Label(self._item_label(p)), name=p.name))
