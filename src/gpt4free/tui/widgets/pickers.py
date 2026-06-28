@@ -103,3 +103,18 @@ class ModelPickerScreen(ModalScreen[Optional[str]]):
     def __init__(self, model_list: list[ModelInfo]) -> None:
         super().__init__()
         self._models = model_list
+
+    def compose(self) -> ComposeResult:
+        with Vertical(classes="modal-box"):
+            yield Label("  🧠  Select Model", classes="modal-title")
+            yield Input(placeholder="🔍 type to filter…", classes="modal-filter", id="flt")
+            yield ListView(
+                *[
+                    ListItem(
+                        Label(f"◆ [bold]{m.display}[/bold]  [dim]{m.alias}[/dim]"),
+                        name=m.alias,
+                    )
+                    for m in self._models
+                ],
+                id="lst",
+            )
