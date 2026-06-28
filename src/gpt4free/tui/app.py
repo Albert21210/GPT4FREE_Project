@@ -35,3 +35,18 @@ from gpt4free.tui.widgets import (
     ProviderPickerScreen,
     StatusScreen,
 )
+
+
+HELP_TEXT = """\
+[bold #6c63ff]GPT4FREE Commands[/bold #6c63ff]
+
+  [bold]/help[/bold]      — show this help
+  [bold]/provider[/bold]  — change provider
+  [bold]/model[/bold]     — change model
+  [bold]/status[/bold]    — probe & show provider status table
+  [bold]/clear[/bold]     — clear conversation history
+  [bold]/new[/bold]       — start a fresh session
+  [bold]/exit[/bold]      — quit
+
+[dim]Tip: use ↑ ↓ arrows to navigate prompt history[/dim]
+"""
