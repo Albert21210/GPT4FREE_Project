@@ -94,3 +94,7 @@ def render_provider_table(providers: list[object]) -> None:  # ProviderInfo
         header_style="bold #6c63ff",
         show_lines=True,
     )
+    table.add_column("Provider", style="bold white", min_width=14)
+    table.add_column("Status", min_width=14)
+    table.add_column("Latency", justify="right", min_width=8)
+    table.add_column("Models", min_width=40)
