@@ -35,6 +35,10 @@ def main(
             help="One-shot prompt (skip TUI, print response and exit)",
         ),
     ] = None,
+      provider: Annotated[
+        Optional[str],
+        typer.Option("--provider", "-P", help="Override provider"),
+    ] = None,
 ) -> None:
     """Launch TUI, or use [bold]-p[/bold] for a single CLI prompt."""
     if ctx.invoked_subcommand is not None:
