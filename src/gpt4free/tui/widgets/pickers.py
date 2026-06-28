@@ -66,3 +66,15 @@ class ProviderPickerScreen(ModalScreen[Optional[str]]):
         if len(p.model_list) > 3:
             models_preview += f" +{len(p.model_list) - 3}"
         return f"{emoji} [bold]{p.name}[/bold]  [dim][{models_preview}][/dim]"
+
+    def compose(self) -> ComposeResult:
+        with Vertical(classes="modal-box"):
+            yield Label("  🔌  Select Provider", classes="modal-title")
+            yield Input(placeholder="🔍 type to filter…", classes="modal-filter", id="flt")
+            yield ListView(
+                *[
+                    ListItem(Label(self._item_label(p)), name=p.name)
+                    for p in self._providers
+                ],
+                id="lst",
+            )
