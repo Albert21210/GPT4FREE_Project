@@ -87,3 +87,10 @@ def render_provider_table(providers: list[object]) -> None:  # ProviderInfo
     """Print a Rich table of all providers and their status."""
     from rich.table import Table
     from gpt4free.providers import ProviderInfo, STATUS_COLOR, STATUS_EMOJI
+
+    table = Table(
+        title="[bold #6c63ff]GPT4FREE ‚ÄĒ Provider Status[/bold #6c63ff]",
+        border_style="#1e1e3a",
+        header_style="bold #6c63ff",
+        show_lines=True,
+    )
