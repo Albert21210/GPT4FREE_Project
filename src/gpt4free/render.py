@@ -31,3 +31,14 @@ def render_markdown(text: str, theme: str = "monokai") -> None:
     tail = text[last:]
     if tail.strip():
         parts.append((tail, None, None))
+
+    for content, lang, code in parts:
+        if lang is not None and code is not None:
+            syntax = Syntax(
+                code.rstrip(),
+                lang,
+                theme=theme,
+                line_numbers=True,
+                word_wrap=True,
+            )
+            _console.print(syntax)
