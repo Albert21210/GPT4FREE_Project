@@ -109,3 +109,11 @@ def cmd_providers(
             preview = ", ".join(m.display for m in p.model_list[:4])
             if len(p.model_list) > 4:
                 preview += f" +{len(p.model_list) - 4}"
+        table.add_row(
+            p.name,
+            f"[{color}]{emoji} {p.status.value}[/{color}]",
+            str(len(p.model_list)),
+            preview,
+        )
+
+    console.print(table)
