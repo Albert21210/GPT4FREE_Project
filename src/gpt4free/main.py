@@ -28,6 +28,13 @@ app = typer.Typer(
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
+      prompt: Annotated[
+        Optional[str],
+        typer.Option(
+            "--prompt", "-p",
+            help="One-shot prompt (skip TUI, print response and exit)",
+        ),
+    ] = None,
 ) -> None:
     """Launch TUI, or use [bold]-p[/bold] for a single CLI prompt."""
     if ctx.invoked_subcommand is not None:
