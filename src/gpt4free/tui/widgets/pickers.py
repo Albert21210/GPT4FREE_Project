@@ -89,3 +89,6 @@ class ProviderPickerScreen(ModalScreen[Optional[str]]):
         for p in self._providers:
             if q in p.name.lower() or any(q in m.display.lower() for m in p.model_list):
                 lv.append(ListItem(Label(self._item_label(p)), name=p.name))
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        self.dismiss(event.item.name)
