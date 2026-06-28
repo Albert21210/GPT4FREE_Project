@@ -78,3 +78,6 @@ class ProviderPickerScreen(ModalScreen[Optional[str]]):
                 ],
                 id="lst",
             )
+
+    def action_dismiss_none(self) -> None:
+        self.dismiss(None)
