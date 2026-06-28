@@ -165,4 +165,22 @@ class GPT4FREETUI(App[None]):
         border: solid #6c63ff;
         background: #0f1228;
     }
+
+    /* ── Status bar ──────────────────────────────────────────── */
+    #status-bar {
+        height: 1;
+        background: #12152a;
+        layout: horizontal;
+        padding: 0 1;
+    }
+    #sb-left  { width: 1fr;  color: #6c63ff; }
+    #sb-mid   { width: auto; color: #3d3f5c; content-align: center middle; }
+    #sb-right { width: auto; color: #3d3f5c; }
+
+    Footer {
+        background: #0d0f17;
+        color: #3d3f5c;
+    }
+    Footer > .footer--highlight { background: #6c63ff; color: white; }
+    Footer > .footer--key       { color: #6c63ff; }
     """
