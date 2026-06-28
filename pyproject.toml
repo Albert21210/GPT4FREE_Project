@@ -1,3 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gpt4free-tui"
+version = "2.0.0"
+description = "GPT4Free TUI/CLI — Gemini CLI style terminal interface for free LLMs"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+authors = [{ name = "GPT4FREE TUI" }]
+keywords = ["gpt4free", "tui", "cli", "llm", "ai", "terminal"]
+
 dependencies = [
     "g4f>=0.4.0",
     "textual>=0.80.0",
