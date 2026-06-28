@@ -149,3 +149,7 @@ def cmd_config(
     model: Annotated[Optional[str], typer.Option("--model", "-m")] = None,
 ) -> None:
     """View or update saved configuration."""
+    from gpt4free.config import load_config, save_config
+    import json
+
+    cfg = load_config()
