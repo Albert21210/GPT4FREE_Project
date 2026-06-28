@@ -136,4 +136,33 @@ class GPT4FREETUI(App[None]):
         padding: 0 1;
         margin-bottom: 1;
     }
+
+    /* ── Input area ──────────────────────────────────────────── */
+    #input-area {
+        height: 5;
+        background: #0d0f17;
+        border-top: solid #1a1d2e;
+        padding: 1 1 0 1;
+    }
+    #input-row {
+        height: 3;
+        align: left middle;
+    }
+    #caret {
+        color: #6c63ff;
+        width: 4;
+        content-align: center middle;
+        text-style: bold;
+    }
+    #prompt {
+        width: 1fr;
+        background: #12152a;
+        border: solid #252850;
+        color: #e0e0ff;
+        padding: 0 1;
+    }
+    #prompt:focus {
+        border: solid #6c63ff;
+        background: #0f1228;
+    }
     """
