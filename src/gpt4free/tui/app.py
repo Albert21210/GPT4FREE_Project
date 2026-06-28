@@ -230,3 +230,14 @@ class GPT4FREETUI(App[None]):
             yield Static("ctrl+p/m/s", id="sb-right")
 
         yield Footer()
+
+    # ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    def on_mount(self) -> None:
+        self.query_one("#prompt", Input).focus()
+        log = self.query_one(ChatLog)
+        log.sys(
+            f"🚀  GPT4FREE TUI  ·  provider: [bold]{self._session.provider}[/bold]"
+            f"  ·  model: [bold]{self._session.model}[/bold]"
+        )
+        log.sys("Type [bold]/help[/bold] to see available commands.")
