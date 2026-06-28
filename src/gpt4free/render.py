@@ -107,3 +107,9 @@ def render_provider_table(providers: list[object]) -> None:  # ProviderInfo
         preview = ", ".join(m.display for m in p.model_list[:4])
         if len(p.model_list) > 4:
             preview += f" +{len(p.model_list) - 4}"
+        table.add_row(
+            p.name,
+            f"[{color}]{emoji} {p.status.value}[/{color}]",
+            lat,
+            preview,
+        )
