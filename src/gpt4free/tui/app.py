@@ -362,3 +362,26 @@ class GPT4FREETUI(App[None]):
             save_config(self._cfg)
 
         await self.push_screen(ProviderPickerScreen(infos), _on_pick)
+
+    async def action_pick_model(self) -> None:
+        infos = list_providers()
+        model_list = []
+        for p in infos:
+            if p.name == self._session.provider:
+                model_list = p.model_list
+                break
+
+        if not model_list:
+            self.query_one(ChatLog).error("No models found for current provider.")
+            return
+
+        def _on_pick(alias: Optional[str]) -> None:
+            if not alias:
+                return
+            self._session.model = alias
+            self._refresh_status()
+            self.query_one(ChatLog).sys(f"✅  Model → [bold]{alias}[/bold]")
+            self._cfg.model = alias
+            save_config(self._cfg)
+
+        await self.push_screen(ModelPickerScreen(model_list), _on_pick)
