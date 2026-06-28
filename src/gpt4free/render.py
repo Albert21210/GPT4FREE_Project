@@ -77,4 +77,8 @@ def render_banner() -> None:
  ██║   ██║██╔═══╝    ██║   ╚════██║██╔══╝  ██╔══██╗██╔══╝  ██╔══╝
  ╚██████╔╝██║        ██║        ██║██║     ██║  ██║███████╗███████╗
   ╚═════╝ ╚═╝        ╚═╝        ╚═╝╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝[/bold #6c63ff]"""
-        _console.print(banner)
+    _console.print(banner)
+    _console.print(
+        "[dim]  Free GPT-4 access ¬∑ No API key ¬∑ "
+        "Type [bold]/help[/bold] for commands[/dim]\n"
+    )
