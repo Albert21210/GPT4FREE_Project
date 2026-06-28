@@ -16,3 +16,11 @@ from typing import Annotated, Optional
 
 import typer
 from rich.console import Console
+
+console = Console()
+app = typer.Typer(
+    name="gpt4free",
+    help="GPT4FREE — free GPT-4 TUI/CLI · No API key required",
+    add_completion=False,
+    rich_markup_mode="rich",
+)
