@@ -87,4 +87,18 @@ class GPT4FREETUI(App[None]):
         text-align: center;
         padding: 0 0 1 0;
     }
+
+    /* ── Chat log area ───────────────────────────────────────── */
+    #chat-scroll {
+        height: 1fr;
+        margin: 0 1;
+        background: #0a0c14;
+        border: solid #1a1d2e;
+        border-title-color: #3d3f5c;
+        scrollbar-color: #6c63ff #1a1d2e;
+        scrollbar-size: 1 1;
+    }
+    ChatLog {
+        padding: 1 2;
+    }
     """
