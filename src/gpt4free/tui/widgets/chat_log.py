@@ -41,3 +41,10 @@ class ChatLog(Widget):
             f"[bold #00cc66]GPT4FREE[/bold #00cc66]\n{self._escape(text)}"
         )
         self._scroll_end()
+
+    def sys(self, text: str) -> Static:
+        """Add a system/info message."""
+        w = Static(text, classes="msg-sys")
+        self.mount(w)
+        self._scroll_end()
+        return w
