@@ -54,3 +54,14 @@ class StatusScreen(ModalScreen[None]):
         ("escape", "dismiss", "Close"),
         ("r",      "probe",   "Re-check all"),
     ]
+
+    def compose(self) -> ComposeResult:
+        with Vertical(classes="ov-box"):
+            yield Label(
+                "  📊  Provider Status  ·  [bold]Esc[/bold] close  "
+                "·  [bold]R[/bold] live probe all",
+                classes="ov-title",
+            )
+            tbl: DataTable[str] = DataTable(id="tbl")
+            tbl.add_columns("Provider", "Status", "Latency", "Models")
+            yield tbl
