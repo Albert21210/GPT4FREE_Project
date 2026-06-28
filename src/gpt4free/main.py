@@ -66,3 +66,13 @@ def main(
             model=effective_model,
             stream=not no_stream,
         )
+
+    else:
+        from gpt4free.tui.app import GPT4FREETUI
+
+        if provider:
+            cfg.provider = provider
+        if model:
+            cfg.model = model
+
+        GPT4FREETUI(cfg).run()
