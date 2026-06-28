@@ -82,3 +82,8 @@ def render_banner() -> None:
         "[dim]  Free GPT-4 access ¬∑ No API key ¬∑ "
         "Type [bold]/help[/bold] for commands[/dim]\n"
     )
+
+def render_provider_table(providers: list[object]) -> None:  # ProviderInfo
+    """Print a Rich table of all providers and their status."""
+    from rich.table import Table
+    from gpt4free.providers import ProviderInfo, STATUS_COLOR, STATUS_EMOJI
