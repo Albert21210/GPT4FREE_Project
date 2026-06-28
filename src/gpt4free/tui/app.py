@@ -184,3 +184,12 @@ class GPT4FREETUI(App[None]):
     Footer > .footer--highlight { background: #6c63ff; color: white; }
     Footer > .footer--key       { color: #6c63ff; }
     """
+
+    BINDINGS = [
+        Binding("ctrl+p", "pick_provider", "Provider"),
+        Binding("ctrl+m", "pick_model",    "Model"),
+        Binding("ctrl+s", "show_status",   "Status"),
+        Binding("ctrl+l", "clear_chat",    "Clear"),
+        Binding("ctrl+n", "new_session",   "New"),
+        Binding("ctrl+c", "quit",          "Quit"),
+    ]
