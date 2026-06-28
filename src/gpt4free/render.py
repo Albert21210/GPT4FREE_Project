@@ -59,3 +59,7 @@ def render_assistant_header(provider: str, model: str) -> None:
         f"\n[bold #00cc66]GPT4FREE[/bold #00cc66] "
         f"[dim]({provider} / {model})[/dim]"
     )
+
+def render_system(text: str) -> None:
+    """Print a dim system/info message."""
+    _console.print(f"[dim]{text}[/dim]")
