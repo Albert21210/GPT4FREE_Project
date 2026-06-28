@@ -24,3 +24,13 @@ class ChatLog(Widget):
         )
         self.mount(w)
         self._scroll_end()
+
+    def bot_placeholder(self) -> Static:
+        """Add an empty bot message that will be updated while streaming."""
+        w = Static(
+            "[bold #00cc66]GPT4FREE[/bold #00cc66]\n[dim]…[/dim]",
+            classes="msg-bot",
+        )
+        self.mount(w)
+        self._scroll_end()
+        return w
