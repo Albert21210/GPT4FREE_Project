@@ -48,3 +48,13 @@ class ChatLog(Widget):
         self.mount(w)
         self._scroll_end()
         return w
+
+    def error(self, text: str) -> Static:
+        """Add an error message."""
+        w = Static(
+            f"[bold red]✗ Error:[/bold red] {text}",
+            classes="msg-error",
+        )
+        self.mount(w)
+        self._scroll_end()
+        return w
