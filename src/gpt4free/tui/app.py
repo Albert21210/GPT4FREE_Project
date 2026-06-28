@@ -58,3 +58,33 @@ BANNER = """\
  ██║   ██║██╔═══╝    ██║   ╚════██║██╔══╝  ██╔══██╗██╔══╝  ██╔══╝
  ╚██████╔╝██║        ██║        ██║██║     ██║  ██║███████╗███████╗
   ╚═════╝ ╚═╝        ╚═╝        ╚═╝╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝"""
+
+
+class GPT4FREETUI(App[None]):
+    """Gemini CLI-style TUI for GPT4FREE."""
+
+    CSS = """
+    /* ── Global ──────────────────────────────────────────────── */
+    Screen {
+        background: #0d0f17;
+        layers: base overlay;
+    }
+
+    /* ── Banner ──────────────────────────────────────────────── */
+    #banner-wrap {
+        height: auto;
+        padding: 1 2 0 2;
+        background: #0d0f17;
+        border-bottom: solid #1a1d2e;
+    }
+    #banner {
+        color: #6c63ff;
+        text-style: bold;
+        text-align: center;
+    }
+    #banner-sub {
+        color: #3d3f5c;
+        text-align: center;
+        padding: 0 0 1 0;
+    }
+    """
