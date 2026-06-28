@@ -193,3 +193,11 @@ class GPT4FREETUI(App[None]):
         Binding("ctrl+n", "new_session",   "New"),
         Binding("ctrl+c", "quit",          "Quit"),
     ]
+
+    def __init__(self, cfg: AppConfig) -> None:
+        super().__init__()
+        self._cfg = cfg
+        self._session = ChatSession(provider=cfg.provider, model=cfg.model)
+        self._busy = False
+        self._history: list[str] = list(cfg.prompt_history)
+        self._hist_idx: int = -1
