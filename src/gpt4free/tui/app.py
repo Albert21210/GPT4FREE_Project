@@ -276,3 +276,12 @@ class GPT4FREETUI(App[None]):
             elif self._hist_idx == 0:
                 self._hist_idx = -1
                 inp.value = ""
+
+    # ── Commands ──────────────────────────────────────────────────────────────
+
+    async def _handle_command(self, cmd: str) -> None:
+        log = self.query_one(ChatLog)
+        base = cmd.split()[0].lower()
+
+        if base == "/help":
+            log.add_widget(Static(HELP_TEXT, classes="msg-help"))
