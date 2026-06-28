@@ -92,3 +92,14 @@ class ProviderPickerScreen(ModalScreen[Optional[str]]):
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         self.dismiss(event.item.name)
+
+
+class ModelPickerScreen(ModalScreen[Optional[str]]):
+    """Fuzzy-searchable model selection modal."""
+
+    DEFAULT_CSS = _MODAL_CSS
+    BINDINGS = [("escape", "dismiss_none", "Cancel")]
+
+    def __init__(self, model_list: list[ModelInfo]) -> None:
+        super().__init__()
+        self._models = model_list
