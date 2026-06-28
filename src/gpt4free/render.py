@@ -63,3 +63,7 @@ def render_assistant_header(provider: str, model: str) -> None:
 def render_system(text: str) -> None:
     """Print a dim system/info message."""
     _console.print(f"[dim]{text}[/dim]")
+
+def render_error(text: str) -> None:
+    """Print an error message."""
+    _console.print(f"[bold red]Error:[/bold red] {text}")
