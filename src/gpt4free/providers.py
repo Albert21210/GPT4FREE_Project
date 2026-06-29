@@ -281,12 +281,80 @@ async def fetch_live_models(
 
 
 def get_provider_class(name: str) -> Optional[object]:
+    import inspect
+
     try:
         from g4f import Provider
         cls = getattr(Provider, name, None)
+        if cls is None:
+            return None
+        if inspect.ismodule(cls):
+            cls = getattr(cls, name, None)
         return cls
     except ImportError:
         return None
+
+
+async def _probe_custom_provider(
+    info: ProviderInfo,
+    proxy: Optional[str] = None,
+    api_key: Optional[str] = None,
+) -> ProviderInfo:
+    """Probe a user-added OpenAI-compatible endpoint via plain HTTP."""
+    import httpx
+
+    if not info.base_url:
+        info.status = ProviderStatus.DOWN
+        info.detail = "missing base_url"
+        return info
+
+    model_alias = info.model_list[0].alias if info.model_list else ""
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    url = info.base_url.rstrip("/") + "/chat/completions"
+    payload = {
+        "model": model_alias,
+        "messages": [{"role": "user", "content": PROBE_PROMPT}],
+    }
+    start = time.monotonic()
+
+    try:
+        async with httpx.AsyncClient(proxy=proxy, timeout=PROBE_TIMEOUT) as client:
+            resp = await client.post(url, json=payload, headers=headers)
+        if resp.status_code == 200:
+            data = resp.json()
+            content = (
+                data.get("choices", [{}])[0]
+                .get("message", {})
+                .get("content", "")
+            )
+            if content:
+                info.status = ProviderStatus.WORKING
+                info.detail = "ok"
+            else:
+                info.status = ProviderStatus.DOWN
+                info.detail = "empty response"
+        elif resp.status_code in (401, 403):
+            info.status = ProviderStatus.AUTH_REQUIRED
+            info.detail = f"HTTP {resp.status_code}"
+        elif resp.status_code == 429:
+            info.status = ProviderStatus.RATE_LIMITED
+            info.detail = "HTTP 429"
+        else:
+            info.status = ProviderStatus.DOWN
+            info.detail = f"HTTP {resp.status_code}: {resp.text[:100]}"
+    except httpx.TimeoutException:
+        info.status = ProviderStatus.DOWN
+        info.detail = f"timeout >{PROBE_TIMEOUT:.0f}s"
+    except Exception as exc:  # noqa: BLE001
+        info.status = ProviderStatus.DOWN
+        info.detail = str(exc)[:120]
+    finally:
+        info.latency_ms = int((time.monotonic() - start) * 1000)
+
+    return info
 
 
 async def probe_provider(info: ProviderInfo) -> ProviderInfo:
