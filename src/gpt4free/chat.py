@@ -3,12 +3,34 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from typing import Optional
 
-from gpt4free.providers import get_provider_class
+from gpt4free.providers import (
+    NO_AUTH_PROVIDERS,
+    PROVIDER_ORDER,
+    PROXY_REQUIRED_PROVIDERS,
+    WORKING_PROVIDERS,
+    get_provider_class,
+)
 
+
+try:
+    from g4f.client import AsyncClient
+except ImportError:
+    AsyncClient = None
+
+try:
+    import g4f
+    from g4f.Provider import Custom as CustomProvider
+except ImportError:
+    g4f = None
+    CustomProvider = None
+    
+MAX_FALLBACK_ATTEMPTS: int = 4
+PROXY_ENV_VAR: str = "G4F_PROXY"
 
 @dataclass
 class Message:
@@ -48,6 +70,28 @@ def _extract_chunk(chunk: object) -> str:
         return str(content)
 
     return ""
+
+
+def fallback_chain(primary_provider: str, primary_model: str) -> list[tuple[str, str]]:
+    """Build an ordered (provider, model) chain to try."""
+    chain: list[tuple[str, str]] = [(primary_provider, primary_model)]
+    seen: set[str] = {primary_provider}
+
+    ordered_candidates = [p for p in PROVIDER_ORDER if p in NO_AUTH_PROVIDERS] + \
+                         [p for p in PROVIDER_ORDER if p not in NO_AUTH_PROVIDERS]
+
+    for name in ordered_candidates:
+        if len(chain) >= MAX_FALLBACK_ATTEMPTS:
+            break
+        if name in seen:
+            continue
+        models = WORKING_PROVIDERS.get(name)
+        if not models:
+            continue
+        chain.append((name, models[0][0]))
+        seen.add(name)
+
+    return chain
 
 
 @dataclass
