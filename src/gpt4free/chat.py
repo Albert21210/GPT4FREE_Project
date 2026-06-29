@@ -138,6 +138,35 @@ class ChatSession:
 
     def clear(self) -> None:
         self.messages.clear()
+        
+    def _resolved_proxy(self) -> Optional[str]:
+        return self.proxy or os.environ.get(PROXY_ENV_VAR) or None
+
+    def _resolve(self, provider_name: str) -> tuple[object, dict]:
+        """Custom provider api."""
+        custom = self.custom_providers.get(provider_name)
+        if custom:
+            extra: dict = {"base_url": custom.get("base_url")}
+            key = custom.get("api_key")
+            if key:
+                extra["api_key"] = key
+            return CustomProvider, extra
+
+        provider_cls = get_provider_class(provider_name)
+        extra = {}
+        key = self.api_keys.get(provider_name)
+        if key:
+            extra["api_key"] = key
+        return provider_cls, extra
+
+    def _proxy_for(self, provider_name: str) -> Optional[str]:
+        """Decide whether this specific provider call should go through the proxy."""
+        proxy = self._resolved_proxy()
+        if not proxy:
+            return None
+        if self.force_proxy or provider_name in PROXY_REQUIRED_PROVIDERS:
+            return proxy
+        return None
 
     # streaming 
 
