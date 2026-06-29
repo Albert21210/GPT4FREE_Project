@@ -220,6 +220,10 @@ class AppConfig:
             "color_scheme": "dark"
         })
         data.setdefault("profiles", {})
+        data.setdefault("api_keys", {})
+        data.setdefault("custom_providers", {})
+        data.setdefault("proxy", None)
+        data.setdefault("force_proxy", False)
         return data
     
 
