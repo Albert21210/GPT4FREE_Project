@@ -13,9 +13,21 @@ WORKING_PROVIDERS: dict[str, list[tuple[str, str]]] = {
         ("openai-large", "GPT-4o Large"),
         ("mistral", "Mistral Large"),
     ],
+    # Qwen - без авторизации(не работает, нужна доработка)
+    "Qwen": [
+        ("qwen3.7-plus", "Qwen3.7 Plus"),
+        ("qwen3.7-max", "Qwen3.7 Max"),
+        ("qwen3.6-plus", "Qwen3.6 Plus"),
+    ],
+    # MetaAI - без авторизации(не всегда)
+    "MetaAI": [
+        ("meta-ai", "Meta AI (Llama)"),
+    ],
 }
 
-NO_AUTH_PROVIDERS: frozenset[str] = frozenset
+NO_AUTH_PROVIDERS: frozenset[str] = frozenset({
+    "PollinationsAI", "Qwen", "MetaAI",
+})
 
 PROXY_REQUIRED_PROVIDERS: frozenset[str] = frozenset
 
