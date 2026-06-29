@@ -8,6 +8,7 @@ from typing import Optional
 
 
 WORKING_PROVIDERS: dict[str, list[tuple[str, str]]] = {
+    # PollinationsAI - без авторизации
     "PollinationsAI": [
         ("openai", "GPT-4o"),
         ("openai-large", "GPT-4o Large"),
@@ -95,6 +96,20 @@ PROXY_REQUIRED_PROVIDERS: frozenset[str] = frozenset({
 
 PROVIDER_ORDER: list[str] = [
     "PollinationsAI",
+    "Qwen",
+    "MetaAI",
+    "GeminiPro",
+    "DeepInfra",
+    "OpenRouterFree",
+    "Groq",
+    "Felo",
+    "Yqcloud",
+    "Pi",
+    "Cerebras",
+    "Gemini",
+    "Grok",
+    "BlackboxPro",
+    "HuggingFace",
 ]
 
 DEFAULT_PROVIDER: str = "PollinationsAI"
@@ -220,11 +235,49 @@ def list_providers(custom_providers: Optional[dict[str, dict]] = None) -> list[P
 
 
 
-def get_provider_info(name: str) -> Optional[ProviderInfo]:
-    for p in list_providers():
+def get_provider_info(name: str, custom_providers: Optional[dict[str, dict]] = None) -> Optional[ProviderInfo]:
+    for p in list_providers(custom_providers):
         if p.name == name:
             return p
     return None
+
+
+async def fetch_live_models(
+    name: str,
+    api_key: Optional[str] = None,
+    timeout: float = 15.0,
+) -> list[ModelInfo]:
+    """Fetch the *actual* current model catalog for a provider straight from
+    g4f / the provider's own API, instead of our small curated subset.
+
+    WORKING_PROVIDERS only lists a handful of hand-picked models per provider
+    (the ones we originally verified). Most g4f provider classes expose a
+    `get_models()` classmethod that calls out to the provider's live models
+    endpoint and can return dozens to 100+ entries (see e.g. PollinationsAI,
+    DeepInfra, HuggingFace on g4f.dev/docs/providers-and-models). This taps
+    into that directly. `model` can then be set to ANY of the returned
+    aliases — nothing in chat.py validates it against WORKING_PROVIDERS, that
+    list is only used for the curated default/picker display.
+    """
+    provider_cls = get_provider_class(name)
+    if provider_cls is None or not hasattr(provider_cls, "get_models"):
+        return []
+
+    def _call() -> list:
+        kwargs = {}
+        if api_key:
+            kwargs["api_key"] = api_key
+        return provider_cls.get_models(**kwargs)
+
+    try:
+        models = await asyncio.wait_for(asyncio.to_thread(_call), timeout=timeout)
+    except (asyncio.TimeoutError, Exception):
+        return []
+
+    if not models:
+        return []
+
+    return [ModelInfo(alias=str(m), display=str(m)) for m in models]
 
 
 def get_provider_class(name: str) -> Optional[object]:
