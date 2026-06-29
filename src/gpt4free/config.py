@@ -88,6 +88,14 @@ class AppConfig:
     proxy: Optional[str] = None
     force_proxy: bool = False
 
+    def set_proxy(self, proxy_url: str, force: bool = False) -> None:
+        self.proxy = proxy_url.strip() or None
+        self.force_proxy = force
+
+    def clear_proxy(self) -> None:
+        self.proxy = None
+        self.force_proxy = False
+
     def add_to_history(self, prompt: str) -> None:
         if not prompt:
             return
