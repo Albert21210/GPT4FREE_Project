@@ -52,11 +52,26 @@ WORKING_PROVIDERS: dict[str, list[tuple[str, str]]] = {
     "Groq": [
         ("openai/gpt-oss-120b", "GPT-OSS 120B"),
     ],
+    # Cerebras - требует ключ, но очень быстрый инференс
+    "Cerebras": [
+        ("llama-3.3-70b", "Llama 3.3 70B"),
+        ("llama3.1-70b", "Llama 3.1 70B"),
+    ],
+    # Gemini - официальный веб-доступ, требует cookies/auth
+    "Gemini": [
+        ("gemini-3.1-pro", "Gemini 3.1 Pro"),
+        ("gemini-3.5-flash", "Gemini 3.5 Flash"),
+    ],
+    # Grok - требует авторизацию
+    "Grok": [
+        ("grok-4", "Grok 4"),
+        ("grok-3", "Grok 3"),
+    ],
 }
 
 NO_AUTH_PROVIDERS: frozenset[str] = frozenset({
     "PollinationsAI", "Qwen", "MetaAI", "Yqcloud", "Felo", "Pi",
-    "DeepInfra", "GeminiPro", "OpenRouterFree", "Groq",
+    "DeepInfra", "GeminiPro", "OpenRouterFree", "Groq", "Cerebras", "Gemini", "Grok"
 })
 
 PROXY_REQUIRED_PROVIDERS: frozenset[str] = frozenset
