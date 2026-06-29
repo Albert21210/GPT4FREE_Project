@@ -38,7 +38,8 @@ CONFIG_SCHEMA = {
             "color_scheme": {"type": "string"}
         }},
         "profiles": {"type": "object"},
-        "active_profile": {"type": ["string", "null"]}
+        "active_profile": {"type": ["string", "null"]},
+        "api_keys": {"type": "object"},
     },
     "required": ["version", "provider", "model"]
 }
@@ -77,6 +78,8 @@ class AppConfig:
     # Multiple profiles
     profiles: dict[str, dict] = field(default_factory=dict)
     active_profile: Optional[str] = None
+
+    api_keys: dict[str, str] = field(default_factory=dict)
 
     def add_to_history(self, prompt: str) -> None:
         if not prompt:
