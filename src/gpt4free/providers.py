@@ -431,11 +431,19 @@ async def probe_provider(
 async def probe_all(
     providers: list[ProviderInfo],
     concurrency: int = 4,
+    proxy: Optional[str] = None,
+    api_keys: Optional[dict[str, str]] = None,
 ) -> list[ProviderInfo]:
     sem = asyncio.Semaphore(concurrency)
+    api_keys = api_keys or {}
 
     async def _bounded(p: ProviderInfo) -> ProviderInfo:
         async with sem:
-            return await probe_provider(p)
+            # Only route through the proxy for providers known to need it,
+            # so a slow/unreliable proxy doesn't needlessly slow down probes
+            # for providers that work fine without it.
+            p_proxy = proxy if (proxy and p.needs_proxy) else None
+            key = api_keys.get(p.name)
+            return await probe_provider(p, proxy=p_proxy, api_key=key)
 
     return list(await asyncio.gather(*(_bounded(p) for p in providers)))
