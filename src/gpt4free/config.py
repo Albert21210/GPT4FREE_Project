@@ -96,6 +96,31 @@ class AppConfig:
         self.proxy = None
         self.force_proxy = False
 
+    def set_api_key(self, provider: str, key: str) -> None:
+        if key:
+            self.api_keys[provider] = key
+        else:
+            self.api_keys.pop(provider, None)
+
+    def get_api_key(self, provider: str) -> Optional[str]:
+        return self.api_keys.get(provider)
+
+    def add_custom_provider(
+        self,
+        name: str,
+        base_url: str,
+        models: list[dict[str, str]],
+        api_key: str = "",
+    ) -> None:
+        self.custom_providers[name] = {
+            "base_url": base_url,
+            "api_key": api_key,
+            "models": models,
+        }
+
+    def remove_custom_provider(self, name: str) -> None:
+        self.custom_providers.pop(name, None)
+
     def add_to_history(self, prompt: str) -> None:
         if not prompt:
             return
