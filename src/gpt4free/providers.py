@@ -24,6 +24,7 @@ DEFAULT_MODEL: str = "openai"
 
 PROBE_PROMPT: str = "Reply with one word: hello"
 PROBE_TIMEOUT: float = 12.0
+PROBE_TIMEOUT_BROWSER: float = 60.0
 
 
 class ProviderStatus(str, Enum):
@@ -64,6 +65,11 @@ class ProviderInfo:
     status: ProviderStatus = ProviderStatus.WORKING
     detail: str = ""
     latency_ms: Optional[int] = None
+    needs_auth: bool = False
+    needs_proxy: bool = False
+    is_custom: bool = False
+    base_url: Optional[str] = None
+    requires_browser: bool = False
 
     @property
     def models(self) -> list[str]:
@@ -79,7 +85,32 @@ class ProviderInfo:
         return STATUS_COLOR.get(self.status, "white")
 
 
-def list_providers() -> list[ProviderInfo]:
+def custom_providers_to_info(
+    custom_providers: Optional[dict[str, dict]] = None,
+) -> list[ProviderInfo]:
+    """Turn config.py's `custom_providers` dict into ProviderInfo entries."""
+    if not custom_providers:
+        return []
+
+    result: list[ProviderInfo] = []
+    for name, cfg in custom_providers.items():
+        models = cfg.get("models", [])
+        model_list = [
+            ModelInfo(alias=m["alias"], display=m.get("display", m["alias"]))
+            for m in models
+        ]
+        result.append(ProviderInfo(
+            name=name,
+            model_list=model_list,
+            needs_auth=bool(cfg.get("api_key")),
+            needs_proxy=False,
+            is_custom=True,
+            base_url=cfg.get("base_url"),
+        ))
+    return result
+
+
+def list_providers(custom_providers: Optional[dict[str, dict]] = None) -> list[ProviderInfo]:
     result: list[ProviderInfo] = []
     seen: set[str] = set()
 
