@@ -202,26 +202,42 @@ class ChatSession:
         """
         Yield text chunks using g4f.client.AsyncClient (modern streaming API).
 
-        Falls back to legacy g4f.ChatCompletion.create if AsyncClient fails.
+        Tries each (provider, model) pair in the fallback chain in turn.
+        A provider only counts as "failed" if it raises before yielding any
+        chunk, so a stream that starts and then dies mid-way is not silently
+        retried from scratch with a different provider.
         """
-        from g4f.client import AsyncClient  # type: ignore[import]
+        last_error: Optional[Exception] = None
 
-        provider_cls = get_provider_class(self.provider)
+        for provider_name, model in self._chain():
+            provider_cls, resolve_extra = self._resolve(provider_name)
+            proxy = self._proxy_for(provider_name)
+            stream_kwargs: dict = {"model": model, "messages": self._payload()}
+            stream_kwargs.update(resolve_extra)
+            if proxy:
+                stream_kwargs["proxy"] = proxy
 
-        try:
-            client = AsyncClient(provider=provider_cls)
-            stream = client.chat.completions.stream(
-                model=self.model,
-                messages=self._payload(),
-            )
-            # stream is an async iterable, not a context manager
-            async for chunk in stream:
-                text = _extract_chunk(chunk)
-                if text:
-                    yield text
-        except Exception as primary_exc:  # noqa: BLE001
-            # Fallback to legacy synchronous API in a thread
-            yield await self._legacy_fallback(str(primary_exc))
+            yielded_any = False
+            try:
+                client = AsyncClient(provider=provider_cls)
+                stream = client.chat.completions.stream(**stream_kwargs)
+                async for chunk in stream:
+                    text = _extract_chunk(chunk)
+                    if text:
+                        yielded_any = True
+                        self.last_provider, self.last_model = provider_name, model
+                        yield text
+                if yielded_any:
+                    return
+                last_error = RuntimeError(f"{provider_name}: empty stream")
+            except Exception as exc:  # noqa: BLE001
+                last_error = exc
+                if yielded_any:
+                    return
+                continue
+
+        # Every provider in the chain failed before yielding anything.
+        yield await self._legacy_fallback(str(last_error) if last_error else "unknown error")
 
     async def _legacy_fallback(self, reason: str) -> str:
         """
