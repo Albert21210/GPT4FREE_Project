@@ -357,7 +357,14 @@ async def _probe_custom_provider(
     return info
 
 
-async def probe_provider(info: ProviderInfo) -> ProviderInfo:
+async def probe_provider(
+    info: ProviderInfo,
+    proxy: Optional[str] = None,
+    api_key: Optional[str] = None,
+) -> ProviderInfo:
+    if info.is_custom:
+        return await _probe_custom_provider(info, proxy=proxy, api_key=api_key)
+
     from g4f.client import AsyncClient
 
     provider_cls = get_provider_class(info.name)
@@ -366,17 +373,26 @@ async def probe_provider(info: ProviderInfo) -> ProviderInfo:
         info.detail = "class not found"
         return info
 
+    info.requires_browser = bool(getattr(provider_cls, "use_nodriver", False))
+    effective_timeout = PROBE_TIMEOUT_BROWSER if info.requires_browser else PROBE_TIMEOUT
+
     model_alias = info.model_list[0].alias if info.model_list else "gpt-4o"
     start = time.monotonic()
+
+    create_kwargs: dict = {
+        "model": model_alias,
+        "messages": [{"role": "user", "content": PROBE_PROMPT}],
+    }
+    if proxy:
+        create_kwargs["proxy"] = proxy
+    if api_key:
+        create_kwargs["api_key"] = api_key
 
     try:
         client = AsyncClient(provider=provider_cls)
         response = await asyncio.wait_for(
-            client.chat.completions.create(
-                model=model_alias,
-                messages=[{"role": "user", "content": PROBE_PROMPT}],
-            ),
-            timeout=PROBE_TIMEOUT,
+            client.chat.completions.create(**create_kwargs),
+            timeout=effective_timeout,
         )
         content = response.choices[0].message.content if response.choices else ""
         if content:
@@ -388,7 +404,13 @@ async def probe_provider(info: ProviderInfo) -> ProviderInfo:
 
     except asyncio.TimeoutError:
         info.status = ProviderStatus.DOWN
-        info.detail = f"timeout >{PROBE_TIMEOUT:.0f}s"
+        if info.requires_browser:
+            info.detail = (
+                f"timeout >{effective_timeout:.0f}s — browser window may be left "
+                f"open, you can close it"
+            )
+        else:
+            info.detail = f"timeout >{effective_timeout:.0f}s"
 
     except Exception as exc:
         msg = str(exc).lower()
