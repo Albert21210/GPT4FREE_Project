@@ -15,6 +15,10 @@ WORKING_PROVIDERS: dict[str, list[tuple[str, str]]] = {
     ],
 }
 
+NO_AUTH_PROVIDERS: frozenset[str] = frozenset
+
+PROXY_REQUIRED_PROVIDERS: frozenset[str] = frozenset
+
 PROVIDER_ORDER: list[str] = [
     "PollinationsAI",
 ]
@@ -118,15 +122,28 @@ def list_providers(custom_providers: Optional[dict[str, dict]] = None) -> list[P
         if name in WORKING_PROVIDERS:
             entries = WORKING_PROVIDERS[name]
             model_list = [ModelInfo(alias=a, display=d) for a, d in entries]
-            result.append(ProviderInfo(name=name, model_list=model_list))
+            result.append(ProviderInfo(
+                name=name,
+                model_list=model_list,
+                needs_auth=name not in NO_AUTH_PROVIDERS,
+                needs_proxy=name in PROXY_REQUIRED_PROVIDERS,
+            ))
             seen.add(name)
 
     for name, entries in WORKING_PROVIDERS.items():
         if name not in seen:
             model_list = [ModelInfo(alias=a, display=d) for a, d in entries]
-            result.append(ProviderInfo(name=name, model_list=model_list))
+            result.append(ProviderInfo(
+                name=name,
+                model_list=model_list,
+                needs_auth=name not in NO_AUTH_PROVIDERS,
+                needs_proxy=name in PROXY_REQUIRED_PROVIDERS,
+            ))
+
+    result.extend(custom_providers_to_info(custom_providers))
 
     return result
+
 
 
 def get_provider_info(name: str) -> Optional[ProviderInfo]:
