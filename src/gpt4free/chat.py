@@ -168,6 +168,34 @@ class ChatSession:
             return proxy
         return None
 
+    async def _call_model(self, extra_kwargs: Optional[dict] = None) -> tuple[object, str, str]:
+        """Walk the fallback chain trying AsyncClient.chat.completions.create().
+        Returns (response, provider_name, model) for the first provider that
+        succeeds. Raises the last exception if every provider in the chain
+        fails — callers decide whether to fall back further (e.g. legacy API)
+        or surface the error."""
+        last_error: Optional[Exception] = None
+
+        for provider_name, model in self._chain():
+            provider_cls, resolve_extra = self._resolve(provider_name)
+            proxy = self._proxy_for(provider_name)
+            create_kwargs: dict = {"model": model, "messages": self._payload()}
+            create_kwargs.update(resolve_extra)
+            if proxy:
+                create_kwargs["proxy"] = proxy
+            if extra_kwargs:
+                create_kwargs.update(extra_kwargs)
+            try:
+                client = AsyncClient(provider=provider_cls)
+                response = await client.chat.completions.create(**create_kwargs)
+                self.last_provider, self.last_model = provider_name, model
+                return response, provider_name, model
+            except Exception as exc:
+                last_error = exc
+                continue
+
+        raise last_error if last_error else RuntimeError("no providers available")
+
     # streaming 
 
     async def ask_stream(self) -> AsyncIterator[str]:
@@ -224,28 +252,23 @@ class ChatSession:
     # one-shot 
 
     async def ask_once(self) -> str:
-        """Return the full response without streaming."""
-        from g4f.client import AsyncClient  # type: ignore[import]
+        """Return the full response without streaming, walking the fallback chain."""
+        last_error: Optional[Exception] = None
 
-        provider_cls = get_provider_class(self.provider)
-        try:
-            client = AsyncClient(provider=provider_cls)
-            response = await client.chat.completions.create(
-                model=self.model,
-                messages=self._payload(),
-            )
-            return str(response.choices[0].message.content)
-        except Exception as exc:  # noqa: BLE001
-            # Fallback
-            import g4f  # type: ignore[import]
+        for provider_name, model in self._chain():
+            provider_cls, resolve_extra = self._resolve(provider_name)
+            proxy = self._proxy_for(provider_name)
+            create_kwargs: dict = {"model": model, "messages": self._payload()}
+            create_kwargs.update(resolve_extra)
+            if proxy:
+                create_kwargs["proxy"] = proxy
             try:
-                result = await asyncio.to_thread(
-                    g4f.ChatCompletion.create,
-                    model=self.model,
-                    messages=self._payload(),
-                    provider=provider_cls,
-                    stream=False,
-                )
-                return str(result)
-            except Exception as exc2:  # noqa: BLE001
-                return f"[error] {exc2}"
+                client = AsyncClient(provider=provider_cls)
+                response = await client.chat.completions.create(**create_kwargs)
+                self.last_provider, self.last_model = provider_name, model
+                return str(response.choices[0].message.content)
+            except Exception as exc:  # noqa: BLE001
+                last_error = exc
+                continue
+
+        return await self._legacy_fallback(str(last_error) if last_error else "unknown error")
