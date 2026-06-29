@@ -41,9 +41,12 @@ CONFIG_SCHEMA = {
         "active_profile": {"type": ["string", "null"]},
         "api_keys": {"type": "object"},
         "custom_providers": {"type": "object"},
+        "proxy": {"type": ["string", "null"]},
+        "force_proxy": {"type": "boolean"}
     },
     "required": ["version", "provider", "model"]
 }
+
 
 @dataclass
 class AppConfig:
@@ -82,6 +85,8 @@ class AppConfig:
 
     api_keys: dict[str, str] = field(default_factory=dict)
     custom_providers: dict[str, dict] = field(default_factory=dict)
+    proxy: Optional[str] = None
+    force_proxy: bool = False
 
     def add_to_history(self, prompt: str) -> None:
         if not prompt:
