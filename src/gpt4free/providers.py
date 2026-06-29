@@ -32,10 +32,19 @@ WORKING_PROVIDERS: dict[str, list[tuple[str, str]]] = {
         ("felo-chat", "Felo Chat"),
         ("felo-search", "Felo Search"),
     ],
+    # Pi - без авторизации
+    "Pi": [
+        ("pi", "Inflection Pi"),
+    ],
+    # DeepInfra - без авторизации(перестал работать)
+    "DeepInfra": [
+        ("MiniMaxAI/MiniMax-M2.5", "MiniMax M2.5"),
+    ],
 }
 
 NO_AUTH_PROVIDERS: frozenset[str] = frozenset({
-    "PollinationsAI", "Qwen", "MetaAI", "Yqcloud", "Felo",
+    "PollinationsAI", "Qwen", "MetaAI", "Yqcloud", "Felo", "Pi",
+    "DeepInfra",
 })
 
 PROXY_REQUIRED_PROVIDERS: frozenset[str] = frozenset
