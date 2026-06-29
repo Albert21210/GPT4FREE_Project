@@ -34,10 +34,13 @@ PROXY_ENV_VAR: str = "G4F_PROXY"
 
 @dataclass
 class Message:
-    """A single conversation message."""
+    """A single conversation message с поддержкой вызова функций."""
 
-    role: str    # "user" | "assistant" | "system"
-    content: str
+    role: str    # "user" | "assistant" | "system" | "tool"
+    content: Optional[str] = None
+    tool_calls: Optional[list[dict]] = None
+    tool_call_id: Optional[str] = None
+    name: Optional[str] = None
 
 
 def _extract_chunk(chunk: object) -> str:
@@ -101,9 +104,31 @@ class ChatSession:
     provider: str
     model: str
     messages: list[Message] = field(default_factory=list)
+    auto_fallback: bool = True
+    proxy: Optional[str] = None
+    force_proxy: bool = False
+    tools: Optional[object] = None
+    max_tool_iterations: int = 5
+    api_keys: dict[str, str] = field(default_factory=dict)
+    custom_providers: dict[str, dict] = field(default_factory=dict)
+
+    last_provider: Optional[str] = field(default=None, init=False)
+    last_model: Optional[str] = field(default=None, init=False)
 
     def _payload(self) -> list[dict[str, str]]:
-        return [{"role": m.role, "content": m.content} for m in self.messages]
+        payload: list[dict] = []
+        for m in self.messages:
+            entry: dict = {"role": m.role}
+            if m.content is not None:
+                entry["content"] = m.content
+            if m.tool_calls:
+                entry["tool_calls"] = m.tool_calls
+            if m.tool_call_id:
+                entry["tool_call_id"] = m.tool_call_id
+            if m.name:
+                entry["name"] = m.name
+            payload.append(entry)
+        return payload
 
     def push_user(self, text: str) -> None:
         self.messages.append(Message("user", text))
