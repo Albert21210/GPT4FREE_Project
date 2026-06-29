@@ -23,10 +23,19 @@ WORKING_PROVIDERS: dict[str, list[tuple[str, str]]] = {
     "MetaAI": [
         ("meta-ai", "Meta AI (Llama)"),
     ],
+    # Yqcloud - без авторизации
+    "Yqcloud": [
+        ("gpt-4", "GPT-4"),
+    ],
+    # Felo - без авторизации
+    "Felo": [
+        ("felo-chat", "Felo Chat"),
+        ("felo-search", "Felo Search"),
+    ],
 }
 
 NO_AUTH_PROVIDERS: frozenset[str] = frozenset({
-    "PollinationsAI", "Qwen", "MetaAI",
+    "PollinationsAI", "Qwen", "MetaAI", "Yqcloud", "Felo",
 })
 
 PROXY_REQUIRED_PROVIDERS: frozenset[str] = frozenset
