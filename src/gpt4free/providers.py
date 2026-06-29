@@ -67,14 +67,31 @@ WORKING_PROVIDERS: dict[str, list[tuple[str, str]]] = {
         ("grok-4", "Grok 4"),
         ("grok-3", "Grok 3"),
     ],
+    # BlackboxPro - требует авторизацию, прокси-доступ к чужим моделям
+    "BlackboxPro": [
+        ("openai/gpt-5", "GPT-5 (via Blackbox)"),
+        ("anthropic/claude-sonnet-4.5", "Claude Sonnet 4.5 (via Blackbox)"),
+        ("deepseek/deepseek-r1-0528", "DeepSeek R1 (via Blackbox)"),
+    ],
+    # HuggingFace - требует API-ключ (huggingface.co/settings/tokens),
+    # но открывает доступ к 100+ моделям через один провайдер
+    "HuggingFace": [
+        ("openai/gpt-oss-120b", "GPT-OSS 120B (free tier)"),
+        ("zai-org/GLM-5.2", "GLM-5.2"),
+        ("deepseek-ai/DeepSeek-V4-Flash", "DeepSeek V4 Flash"),
+        ("deepseek-ai/DeepSeek-V4-Pro", "DeepSeek V4 Pro"),
+        ("Qwen/Qwen3.6-35B-A3B", "Qwen3.6 35B A3B"),
+    ],
 }
 
 NO_AUTH_PROVIDERS: frozenset[str] = frozenset({
-    "PollinationsAI", "Qwen", "MetaAI", "Yqcloud", "Felo", "Pi",
-    "DeepInfra", "GeminiPro", "OpenRouterFree", "Groq", "Cerebras", "Gemini", "Grok"
+    "PollinationsAI", "Qwen", "Yqcloud", "Felo", "Pi",
+    "DeepInfra", "GeminiPro", "OpenRouterFree", "Groq", "Cerebras",
 })
 
-PROXY_REQUIRED_PROVIDERS: frozenset[str] = frozenset
+PROXY_REQUIRED_PROVIDERS: frozenset[str] = frozenset({
+    "Gemini", "GeminiPro", "MetaAI", "Grok",
+})
 
 PROVIDER_ORDER: list[str] = [
     "PollinationsAI",
