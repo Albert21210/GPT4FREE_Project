@@ -234,7 +234,6 @@ def list_providers(custom_providers: Optional[dict[str, dict]] = None) -> list[P
     return result
 
 
-
 def get_provider_info(name: str, custom_providers: Optional[dict[str, dict]] = None) -> Optional[ProviderInfo]:
     for p in list_providers(custom_providers):
         if p.name == name:
