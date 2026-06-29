@@ -274,7 +274,7 @@ class ConfigManager:
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_file = self._backup_path / f"config_{timestamp}.json"
-        self._config_path.copy(backup_file)
+        shutil.copy2(self._config_path, backup_file)
 
         backups = sorted(self._backup_path.glob("config_*.json"))
         for old_backup in backups[:-10]:
@@ -301,7 +301,7 @@ class ConfigManager:
         if not backup_path.exists():
             raise FileNotFoundError(f"Backup '{backup_name}' not found")
 
-        backup_path.copy(self._config_path)
+        shutil.copy2(backup_path, self._config_path)
 
     def export(self, path: Path) -> None:
         config = self.load()
