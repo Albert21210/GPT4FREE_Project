@@ -24,6 +24,7 @@ dependencies = [
     "curl-cffi>=0.15.0",
     "browser-cookie3>=0.20.1",
     "jsonschema>=4.20.0",
+    "zendriver>=0.4.0",
 ]
 
 [project.optional-dependencies]
