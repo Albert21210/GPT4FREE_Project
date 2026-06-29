@@ -40,11 +40,23 @@ WORKING_PROVIDERS: dict[str, list[tuple[str, str]]] = {
     "DeepInfra": [
         ("MiniMaxAI/MiniMax-M2.5", "MiniMax M2.5"),
     ],
+    # GeminiPro - без авторизации (web-сессия)(не всегда)
+    "GeminiPro": [
+        ("models/gemini-2.5-flash", "Gemini 2.5 Flash"),
+    ],
+    # OpenRouterFree - без авторизации(не всегда)
+    "OpenRouterFree": [
+        ("openrouter/free", "OpenRouter Free Pool"),
+    ],
+    # Groq - без авторизации (часть моделей доступна анонимно)
+    "Groq": [
+        ("openai/gpt-oss-120b", "GPT-OSS 120B"),
+    ],
 }
 
 NO_AUTH_PROVIDERS: frozenset[str] = frozenset({
     "PollinationsAI", "Qwen", "MetaAI", "Yqcloud", "Felo", "Pi",
-    "DeepInfra",
+    "DeepInfra", "GeminiPro", "OpenRouterFree", "Groq",
 })
 
 PROXY_REQUIRED_PROVIDERS: frozenset[str] = frozenset
