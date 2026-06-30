@@ -211,3 +211,69 @@ async def test_ask_once_no_fallback_when_disabled() -> None:
         await s.ask_once()
 
     assert mock_client.chat.completions.create.await_count == 1
+
+
+
+# proxy
+
+def test_proxy_not_attached_for_no_auth_provider() -> None:
+    """A provider that isn't in PROXY_REQUIRED_PROVIDERS shouldn't get a proxy
+    even if one is configured, unless force_proxy=True."""
+    s = ChatSession(provider="PollinationsAI", model="openai", proxy="socks5://127.0.0.1:1080")
+    assert s._proxy_for("PollinationsAI") is None
+
+
+def test_proxy_attached_for_geoblocked_provider() -> None:
+    s = ChatSession(provider="Gemini", model="gemini-3.1-pro", proxy="socks5://127.0.0.1:1080")
+    assert s._proxy_for("Gemini") == "socks5://127.0.0.1:1080"
+
+
+def test_force_proxy_applies_to_every_provider() -> None:
+    s = ChatSession(
+        provider="PollinationsAI",
+        model="openai",
+        proxy="http://127.0.0.1:8080",
+        force_proxy=True,
+    )
+    assert s._proxy_for("PollinationsAI") == "http://127.0.0.1:8080"
+
+
+def test_no_proxy_configured_means_no_proxy_anywhere() -> None:
+    s = ChatSession(provider="Gemini", model="gemini-3.1-pro")
+    assert s._proxy_for("Gemini") is None
+
+
+def test_proxy_falls_back_to_env_var(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("G4F_PROXY", "socks5://10.0.0.1:1080")
+    s = ChatSession(provider="MetaAI", model="meta-ai")
+    assert s._proxy_for("MetaAI") == "socks5://10.0.0.1:1080"
+
+
+@pytest.mark.asyncio
+async def test_ask_once_passes_proxy_kwarg_for_geoblocked_provider() -> None:
+    """Proxy should be forwarded as a kwarg to client.chat.completions.create
+    when the primary provider requires it."""
+    mock_message = MagicMock()
+    mock_message.content = "ok via proxy"
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
+
+    with patch("gpt4free.chat.AsyncClient", return_value=mock_client), \
+         patch("gpt4free.chat.get_provider_class", return_value=MagicMock()):
+        s = ChatSession(
+            provider="Gemini",
+            model="gemini-3.1-pro",
+            proxy="socks5://127.0.0.1:1080",
+            auto_fallback=False,
+        )
+        s.push_user("hi")
+        result = await s.ask_once()
+
+    assert result == "ok via proxy"
+    _, kwargs = mock_client.chat.completions.create.call_args
+    assert kwargs.get("proxy") == "socks5://127.0.0.1:1080"
