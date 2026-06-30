@@ -372,3 +372,21 @@ class TestApiKeysAndCustomProviders:
 
             reloaded = mgr.load()
             assert reloaded.get_api_key("Gemini") == "sk-abc"
+
+    def test_default_custom_providers_empty(self):
+        cfg = AppConfig()
+        assert cfg.custom_providers == {}
+
+    def test_add_custom_provider(self):
+        cfg = AppConfig()
+        cfg.add_custom_provider(
+            "MyServer",
+            "http://localhost:8000/v1",
+            [{"alias": "llama3", "display": "Llama 3"}],
+            api_key="sk-local",
+        )
+        assert "MyServer" in cfg.custom_providers
+        entry = cfg.custom_providers["MyServer"]
+        assert entry["base_url"] == "http://localhost:8000/v1"
+        assert entry["api_key"] == "sk-local"
+        assert entry["models"] == [{"alias": "llama3", "display": "Llama 3"}]
