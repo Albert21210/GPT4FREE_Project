@@ -401,3 +401,36 @@ class TestApiKeysAndCustomProviders:
         cfg = AppConfig()
         cfg.remove_custom_provider("DoesNotExist") 
         assert cfg.custom_providers == {}
+
+    def test_custom_provider_roundtrip_through_save_load(self, tmp_path):
+        with patch("gpt4free.config.user_config_dir", return_value=str(tmp_path)):
+            mgr = ConfigManager()
+            cfg = AppConfig()
+            cfg.add_custom_provider(
+                "Together",
+                "https://api.together.xyz/v1",
+                [{"alias": "meta-llama/Llama-3-70b", "display": "Llama 3 70B"}],
+                api_key="sk-together",
+            )
+            mgr.save(cfg)
+
+            reloaded = mgr.load()
+            assert "Together" in reloaded.custom_providers
+            assert reloaded.custom_providers["Together"]["api_key"] == "sk-together"
+
+    def test_old_config_without_new_fields_migrates_cleanly(self):
+        """Configs saved before api_keys/custom_providers existed shouldn't crash."""
+        old_data = {
+            "version": "2.0.0",
+            "provider": "PollinationsAI",
+            "model": "openai",
+        }
+        cfg = AppConfig.from_dict(old_data)
+        assert cfg.api_keys == {}
+        assert cfg.custom_providers == {}
+
+    def test_v1_config_migration_includes_new_field_defaults(self):
+        v1_data = {"provider": "PollinationsAI", "model": "openai"}
+        cfg = AppConfig.from_dict(v1_data)
+        assert cfg.api_keys == {}
+        assert cfg.custom_providers == {}
