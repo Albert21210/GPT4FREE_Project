@@ -160,3 +160,54 @@ def test_fallback_chain_unknown_provider_still_gets_fallbacks() -> None:
     chain = fallback_chain("SomeRandomProvider", "some-model")
     assert chain[0] == ("SomeRandomProvider", "some-model")
     assert len(chain) > 1
+    
+    
+# ChatSession auto-fallback
+
+@pytest.mark.asyncio
+async def test_ask_once_falls_back_to_next_provider() -> None:
+    """If the primary provider raises, ask_once should retry with the next
+    provider in the chain and succeed there."""
+    mock_message = MagicMock()
+    mock_message.content = "from second provider"
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+
+    call_count = {"n": 0}
+
+    async def create_side_effect(*args, **kwargs):
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            raise RuntimeError("rate limited")
+        return mock_response
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(side_effect=create_side_effect)
+
+    with patch("gpt4free.chat.AsyncClient", return_value=mock_client), \
+         patch("gpt4free.chat.get_provider_class", return_value=MagicMock()):
+        s = ChatSession(provider="PollinationsAI", model="openai")
+        s.push_user("ping")
+        result = await s.ask_once()
+
+    assert result == "from second provider"
+    assert call_count["n"] == 2
+    assert s.last_provider != "PollinationsAI"
+
+
+@pytest.mark.asyncio
+async def test_ask_once_no_fallback_when_disabled() -> None:
+    """auto_fallback=False should only try the primary provider once."""
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(side_effect=RuntimeError("down"))
+
+    with patch("gpt4free.chat.AsyncClient", return_value=mock_client), \
+         patch("gpt4free.chat.get_provider_class", return_value=MagicMock()), \
+         patch("asyncio.to_thread", new_callable=AsyncMock, return_value="legacy reply"):
+        s = ChatSession(provider="PollinationsAI", model="openai", auto_fallback=False)
+        s.push_user("hi")
+        await s.ask_once()
+
+    assert mock_client.chat.completions.create.await_count == 1
