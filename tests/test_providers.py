@@ -171,3 +171,118 @@ def test_get_provider_info_finds_custom() -> None:
     info = get_provider_info("MyServer", custom)
     assert info is not None
     assert info.is_custom is True
+    
+    
+# probe_provider / probe_all with api_key & custom providers
+
+@pytest.mark.asyncio
+async def test_probe_provider_custom_routes_to_http_probe() -> None:
+    info = ProviderInfo(
+        name="MyServer",
+        model_list=[ModelInfo(alias="m1", display="M1")],
+        is_custom=True,
+        base_url="http://localhost:8080/v1",
+    )
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"choices": [{"message": {"content": "hello"}}]}
+
+    mock_http_client = MagicMock()
+    mock_http_client.__aenter__ = AsyncMock(return_value=mock_http_client)
+    mock_http_client.__aexit__ = AsyncMock(return_value=False)
+    mock_http_client.post = AsyncMock(return_value=mock_response)
+
+    with patch("httpx.AsyncClient", return_value=mock_http_client):
+        result = await probe_provider(info)
+
+    assert result.status == ProviderStatus.WORKING
+    assert result.detail == "ok"
+
+
+@pytest.mark.asyncio
+async def test_probe_provider_custom_missing_base_url() -> None:
+    info = ProviderInfo(
+        name="Broken",
+        model_list=[ModelInfo(alias="m1", display="M1")],
+        is_custom=True,
+        base_url=None,
+    )
+    result = await probe_provider(info)
+    assert result.status == ProviderStatus.DOWN
+    assert "base_url" in result.detail
+
+
+@pytest.mark.asyncio
+async def test_probe_provider_custom_auth_required_on_401() -> None:
+    info = ProviderInfo(
+        name="MyServer",
+        model_list=[ModelInfo(alias="m1", display="M1")],
+        is_custom=True,
+        base_url="http://localhost:8080/v1",
+    )
+
+    mock_response = MagicMock()
+    mock_response.status_code = 401
+    mock_response.text = "unauthorized"
+
+    mock_http_client = MagicMock()
+    mock_http_client.__aenter__ = AsyncMock(return_value=mock_http_client)
+    mock_http_client.__aexit__ = AsyncMock(return_value=False)
+    mock_http_client.post = AsyncMock(return_value=mock_response)
+
+    with patch("httpx.AsyncClient", return_value=mock_http_client):
+        result = await probe_provider(info)
+
+    assert result.status == ProviderStatus.AUTH_REQUIRED
+    assert "401" in result.detail
+
+
+@pytest.mark.asyncio
+async def test_probe_provider_passes_api_key_to_builtin() -> None:
+    info = ProviderInfo(name="Cerebras", model_list=[ModelInfo(alias="llama-3.3-70b", display="Llama")])
+
+    mock_message = MagicMock()
+    mock_message.content = "hello"
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
+
+    with patch("g4f.client.AsyncClient", return_value=mock_client), \
+         patch("gpt4free.providers.get_provider_class", return_value=MagicMock()):
+        result = await probe_provider(info, api_key="sk-test-789")
+
+    assert result.status == ProviderStatus.WORKING
+    _, kwargs = mock_client.chat.completions.create.call_args
+    assert kwargs.get("api_key") == "sk-test-789"
+
+
+@pytest.mark.asyncio
+async def test_probe_all_forwards_api_keys_dict() -> None:
+    info = ProviderInfo(
+        name="Cerebras",
+        model_list=[ModelInfo(alias="llama-3.3-70b", display="Llama")],
+        needs_proxy=False,
+    )
+
+    mock_message = MagicMock()
+    mock_message.content = "hello"
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
+
+    with patch("g4f.client.AsyncClient", return_value=mock_client), \
+         patch("gpt4free.providers.get_provider_class", return_value=MagicMock()):
+        results = await probe_all([info], api_keys={"Cerebras": "sk-abc"})
+
+    assert results[0].status == ProviderStatus.WORKING
+    _, kwargs = mock_client.chat.completions.create.call_args
+    assert kwargs.get("api_key") == "sk-abc"
