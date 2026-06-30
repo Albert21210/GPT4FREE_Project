@@ -28,3 +28,13 @@ class Tool:
                 "parameters": self.parameters,
             },
         }
+    
+    async def call(self, **kwargs: Any) -> str:
+        if self.handler is None:
+            return json.dumps({"error": f"tool '{self.name}' has no handler"})
+        result = self.handler(**kwargs)
+        if inspect.isawaitable(result):
+            result = await result
+        if isinstance(result, str):
+            return result
+        return json.dumps(result, ensure_ascii=False, default=str)
