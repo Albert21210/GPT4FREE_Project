@@ -31,3 +31,13 @@ def test_parse_tool_arguments_already_dict() -> None:
 
 def test_parse_tool_arguments_non_dict_json() -> None:
     assert parse_tool_arguments("[1, 2, 3]") == {}
+    
+
+# Tool / ToolRegistry
+
+def test_tool_to_openai_schema() -> None:
+    tool = Tool(name="ping", description="Replies pong", handler=lambda: "pong")
+    schema = tool.to_openai_schema()
+    assert schema["type"] == "function"
+    assert schema["function"]["name"] == "ping"
+    assert schema["function"]["description"] == "Replies pong"
