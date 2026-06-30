@@ -49,3 +49,41 @@ def _extract_text(result: Any) -> str:
         return json.dumps([{"type": getattr(c, "type", "unknown")} for c in content], ensure_ascii=False)
 
     return ""
+
+
+@dataclass
+class MCPToolSource:
+    """A live connection to one MCP server, with its tools discovered and wrapped."""
+
+    server_name: str
+    session: "ClientSession"
+    tools: list[Tool] = field(default_factory=list)
+
+    async def discover(self) -> list[Tool]:
+        """List the server's tools, wrap each as a gpt4free `Tool`, cache and return them."""
+        listing = await self.session.list_tools()
+        self.tools = [self._wrap(t) for t in listing.tools]
+        return self.tools
+
+    def _wrap(self, mcp_tool: Any) -> Tool:
+        # Prefix with the server name to avoid collisions when multiple MCP
+        # servers (or local skills) expose tools with the same short name.
+        qualified_name = f"{self.server_name}.{mcp_tool.name}"
+
+        async def handler(**kwargs: Any) -> str:
+            result = await self.session.call_tool(mcp_tool.name, arguments=kwargs)
+            return _extract_text(result)
+
+        return Tool(
+            name=qualified_name,
+            description=mcp_tool.description or f"Tool '{mcp_tool.name}' from MCP server '{self.server_name}'",
+            parameters=mcp_tool.inputSchema or {"type": "object", "properties": {}},
+            handler=handler,
+        )
+
+    def register_into(self, registry: ToolRegistry) -> list[Tool]:
+        """Register all discovered tools into `registry`. Call discover() first
+        (connect_mcp_stdio/connect_mcp_http already do this for you)."""
+        for tool in self.tools:
+            registry.register(tool)
+        return self.tools
