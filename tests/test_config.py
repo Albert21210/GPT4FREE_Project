@@ -390,3 +390,14 @@ class TestApiKeysAndCustomProviders:
         assert entry["base_url"] == "http://localhost:8000/v1"
         assert entry["api_key"] == "sk-local"
         assert entry["models"] == [{"alias": "llama3", "display": "Llama 3"}]
+
+    def test_remove_custom_provider(self):
+        cfg = AppConfig()
+        cfg.add_custom_provider("MyServer", "http://localhost:8000/v1", [{"alias": "llama3", "display": "Llama 3"}])
+        cfg.remove_custom_provider("MyServer")
+        assert "MyServer" not in cfg.custom_providers
+
+    def test_remove_nonexistent_custom_provider_is_noop(self):
+        cfg = AppConfig()
+        cfg.remove_custom_provider("DoesNotExist") 
+        assert cfg.custom_providers == {}
