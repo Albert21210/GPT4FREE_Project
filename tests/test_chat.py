@@ -277,3 +277,67 @@ async def test_ask_once_passes_proxy_kwarg_for_geoblocked_provider() -> None:
     assert result == "ok via proxy"
     _, kwargs = mock_client.chat.completions.create.call_args
     assert kwargs.get("proxy") == "socks5://127.0.0.1:1080"
+    
+
+# api_keys / custom_providers (_resolve)
+
+def test_resolve_builtin_provider_no_api_key() -> None:
+    s = ChatSession(provider="PollinationsAI", model="openai")
+    with patch("gpt4free.chat.get_provider_class", return_value="FAKE_CLASS"):
+        provider_cls, extra = s._resolve("PollinationsAI")
+    assert provider_cls == "FAKE_CLASS"
+    assert "api_key" not in extra
+
+
+def test_resolve_builtin_provider_with_api_key() -> None:
+    s = ChatSession(provider="Cerebras", model="llama-3.3-70b", api_keys={"Cerebras": "sk-test-123"})
+    with patch("gpt4free.chat.get_provider_class", return_value="FAKE_CLASS"):
+        provider_cls, extra = s._resolve("Cerebras")
+    assert provider_cls == "FAKE_CLASS"
+    assert extra["api_key"] == "sk-test-123"
+
+
+def test_resolve_api_key_only_applied_to_matching_provider() -> None:
+    """A key configured for one provider shouldn't leak into another."""
+    s = ChatSession(provider="PollinationsAI", model="openai", api_keys={"Cerebras": "sk-test-123"})
+    with patch("gpt4free.chat.get_provider_class", return_value="FAKE_CLASS"):
+        _, extra = s._resolve("PollinationsAI")
+    assert "api_key" not in extra
+
+
+def test_resolve_custom_provider_uses_custom_provider_class() -> None:
+    s = ChatSession(
+        provider="MyLocalServer",
+        model="local-model",
+        custom_providers={
+            "MyLocalServer": {
+                "base_url": "http://localhost:8080/v1",
+                "api_key": "local-key",
+                "models": [{"alias": "local-model", "display": "Local Model"}],
+            }
+        },
+    )
+    with patch("gpt4free.chat.CustomProvider", "CUSTOM_PROVIDER_CLASS"):
+        provider_cls, extra = s._resolve("MyLocalServer")
+    assert provider_cls == "CUSTOM_PROVIDER_CLASS"
+    assert extra["base_url"] == "http://localhost:8080/v1"
+    assert extra["api_key"] == "local-key"
+
+
+def test_resolve_custom_provider_without_api_key() -> None:
+    """A custom provider with no api_key configured shouldn't send one."""
+    s = ChatSession(
+        provider="MyLocalServer",
+        model="local-model",
+        custom_providers={
+            "MyLocalServer": {
+                "base_url": "http://localhost:8080/v1",
+                "api_key": "",
+                "models": [{"alias": "local-model", "display": "Local Model"}],
+            }
+        },
+    )
+    with patch("gpt4free.chat.CustomProvider", "CUSTOM_PROVIDER_CLASS"):
+        _, extra = s._resolve("MyLocalServer")
+    assert "api_key" not in extra
+    assert extra["base_url"] == "http://localhost:8080/v1"
