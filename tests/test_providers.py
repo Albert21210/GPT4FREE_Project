@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from gpt4free.providers import (
@@ -12,8 +14,12 @@ from gpt4free.providers import (
     ProviderStatus,
     PROVIDER_ORDER,
     WORKING_PROVIDERS,
+    custom_providers_to_info,
+    get_provider_class,
     get_provider_info,
     list_providers,
+    probe_all,
+    probe_provider,
 )
 
 
@@ -93,3 +99,75 @@ def test_working_providers_dict_integrity() -> None:
         for alias, display in entries:
             assert isinstance(alias, str) and alias, f"Bad alias in {name}"
             assert isinstance(display, str) and display, f"Bad display in {name}"
+
+
+# custom providers
+
+def test_custom_providers_to_info_empty() -> None:
+    assert custom_providers_to_info(None) == []
+    assert custom_providers_to_info({}) == []
+
+
+def test_custom_providers_to_info_basic() -> None:
+    custom = {
+        "MyServer": {
+            "base_url": "http://localhost:8080/v1",
+            "api_key": "sk-local",
+            "models": [{"alias": "local-7b", "display": "Local 7B"}],
+        }
+    }
+    infos = custom_providers_to_info(custom)
+    assert len(infos) == 1
+    info = infos[0]
+    assert info.name == "MyServer"
+    assert info.is_custom is True
+    assert info.base_url == "http://localhost:8080/v1"
+    assert info.needs_auth is True  # has an api_key configured
+    assert info.needs_proxy is False
+    assert info.model_list[0].alias == "local-7b"
+
+
+def test_custom_providers_to_info_no_api_key_needs_auth_false() -> None:
+    custom = {
+        "OpenServer": {
+            "base_url": "http://localhost:9000/v1",
+            "api_key": "",
+            "models": [{"alias": "m1", "display": "M1"}],
+        }
+    }
+    infos = custom_providers_to_info(custom)
+    assert infos[0].needs_auth is False
+
+
+def test_list_providers_includes_custom() -> None:
+    custom = {
+        "MyServer": {
+            "base_url": "http://localhost:8080/v1",
+            "api_key": "",
+            "models": [{"alias": "local-7b", "display": "Local 7B"}],
+        }
+    }
+    names = [p.name for p in list_providers(custom)]
+    assert "MyServer" in names
+    # Built-ins still present and still ordered first
+    assert names[0] == PROVIDER_ORDER[0]
+
+
+def test_list_providers_without_custom_unaffected() -> None:
+    """Passing no custom_providers should behave exactly as before."""
+    names_default = [p.name for p in list_providers()]
+    names_explicit_none = [p.name for p in list_providers(None)]
+    assert names_default == names_explicit_none
+
+
+def test_get_provider_info_finds_custom() -> None:
+    custom = {
+        "MyServer": {
+            "base_url": "http://localhost:8080/v1",
+            "api_key": "",
+            "models": [{"alias": "local-7b", "display": "Local 7B"}],
+        }
+    }
+    info = get_provider_info("MyServer", custom)
+    assert info is not None
+    assert info.is_custom is True
