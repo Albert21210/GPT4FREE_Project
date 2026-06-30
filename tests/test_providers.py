@@ -171,9 +171,9 @@ def test_get_provider_info_finds_custom() -> None:
     info = get_provider_info("MyServer", custom)
     assert info is not None
     assert info.is_custom is True
-    
-    
-# probe_provider / probe_all with api_key & custom providers
+
+
+# probe_provider / probe_all with api_key & custom provider
 
 @pytest.mark.asyncio
 async def test_probe_provider_custom_routes_to_http_probe() -> None:
@@ -288,7 +288,7 @@ async def test_probe_all_forwards_api_keys_dict() -> None:
     assert kwargs.get("api_key") == "sk-abc"
 
 
-# ── get_provider_class: g4f lazy-loader race-condition workaround ─────────────
+# get_provider_class: g4f lazy-loader race-condition workaround
 
 def test_get_provider_class_returns_class_directly() -> None:
     """The normal, non-racy path: g4f.Provider attribute is already a class."""
@@ -326,7 +326,7 @@ def test_get_provider_class_unknown_name_returns_none() -> None:
     assert result is None
 
 
-# ── fetch_live_models: live model catalog straight from the provider ──────────
+# fetch_live_models: live model catalog straight from the provider
 
 @pytest.mark.asyncio
 async def test_fetch_live_models_unknown_provider_returns_empty() -> None:
@@ -426,3 +426,61 @@ async def test_fetch_live_models_empty_result_returns_empty_list() -> None:
     with patch("gpt4free.providers.get_provider_class", return_value=FakeProvider):
         models = await fetch_live_models("PollinationsAI")
     assert models == []
+
+
+# requires_browser flag & extended timeout for nodriver-based providers
+
+def test_probe_provider_info_default_requires_browser_false() -> None:
+    info = ProviderInfo(name="PollinationsAI", model_list=[ModelInfo(alias="m1", display="M1")])
+    assert info.requires_browser is False
+
+
+@pytest.mark.asyncio
+async def test_probe_provider_detects_use_nodriver_and_sets_flag() -> None:
+    info = ProviderInfo(name="Pi", model_list=[ModelInfo(alias="pi", display="Pi")])
+
+    class FakeNodriverProvider:
+        use_nodriver = True
+
+    mock_message = MagicMock()
+    mock_message.content = "hi"
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
+
+    with patch("g4f.client.AsyncClient", return_value=mock_client), \
+         patch("gpt4free.providers.get_provider_class", return_value=FakeNodriverProvider):
+        result = await probe_provider(info)
+
+    assert result.requires_browser is True
+    assert result.status == ProviderStatus.WORKING
+
+
+@pytest.mark.asyncio
+async def test_probe_provider_uses_longer_timeout_for_browser_providers() -> None:
+    from gpt4free.providers import PROBE_TIMEOUT_BROWSER
+
+    info = ProviderInfo(name="Pi", model_list=[ModelInfo(alias="pi", display="Pi")])
+
+    class FakeNodriverProvider:
+        use_nodriver = True
+
+    captured_timeout = {}
+
+    async def fake_wait_for(coro, timeout):
+        captured_timeout["value"] = timeout
+        coro.close()
+        raise __import__("asyncio").TimeoutError()
+
+    with patch("g4f.client.AsyncClient"), \
+         patch("gpt4free.providers.get_provider_class", return_value=FakeNodriverProvider), \
+         patch("asyncio.wait_for", side_effect=fake_wait_for):
+        result = await probe_provider(info)
+
+    assert captured_timeout["value"] == PROBE_TIMEOUT_BROWSER
+    assert result.status == ProviderStatus.DOWN
+    assert "browser window" in result.detail
