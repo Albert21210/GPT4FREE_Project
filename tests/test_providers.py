@@ -286,3 +286,143 @@ async def test_probe_all_forwards_api_keys_dict() -> None:
     assert results[0].status == ProviderStatus.WORKING
     _, kwargs = mock_client.chat.completions.create.call_args
     assert kwargs.get("api_key") == "sk-abc"
+
+
+# ── get_provider_class: g4f lazy-loader race-condition workaround ─────────────
+
+def test_get_provider_class_returns_class_directly() -> None:
+    """The normal, non-racy path: g4f.Provider attribute is already a class."""
+    fake_cls = type("FakeProvider", (), {})
+
+    with patch("g4f.Provider") as mock_provider_pkg:
+        mock_provider_pkg.FakeProvider = fake_cls
+        result = get_provider_class("FakeProvider")
+    assert result is fake_cls
+
+
+def test_get_provider_class_recovers_from_module_race() -> None:
+    """If g4f's lazy-loader hands back the raw submodule (race condition),
+    we should dig the real class out of it instead of returning a module."""
+    import types
+
+    fake_cls = type("PollinationsAI", (), {})
+    fake_submodule = types.ModuleType("g4f.Provider.PollinationsAI")
+    fake_submodule.PollinationsAI = fake_cls
+
+    with patch("g4f.Provider") as mock_provider_pkg:
+        mock_provider_pkg.PollinationsAI = fake_submodule
+        result = get_provider_class("PollinationsAI")
+
+    assert result is fake_cls
+    assert not isinstance(result, types.ModuleType)
+
+
+def test_get_provider_class_unknown_name_returns_none() -> None:
+    with patch("g4f.Provider") as mock_provider_pkg:
+        mock_provider_pkg.configure_mock(**{"NotARealProvider": None})
+        # getattr with default None simulates an unknown attribute
+        del mock_provider_pkg.NotARealProvider
+        result = get_provider_class("NotARealProvider")
+    assert result is None
+
+
+# ── fetch_live_models: live model catalog straight from the provider ──────────
+
+@pytest.mark.asyncio
+async def test_fetch_live_models_unknown_provider_returns_empty() -> None:
+    from gpt4free.providers import fetch_live_models
+    with patch("gpt4free.providers.get_provider_class", return_value=None):
+        models = await fetch_live_models("DoesNotExist")
+    assert models == []
+
+
+@pytest.mark.asyncio
+async def test_fetch_live_models_no_get_models_returns_empty() -> None:
+    from gpt4free.providers import fetch_live_models
+
+    class NoGetModels:
+        pass
+
+    with patch("gpt4free.providers.get_provider_class", return_value=NoGetModels):
+        models = await fetch_live_models("SomeProvider")
+    assert models == []
+
+
+@pytest.mark.asyncio
+async def test_fetch_live_models_returns_model_info_list() -> None:
+    from gpt4free.providers import fetch_live_models
+
+    class FakeProvider:
+        @classmethod
+        def get_models(cls, **kwargs):
+            return ["gpt-5.4", "gpt-5.4-mini", "openai-large"]
+
+    with patch("gpt4free.providers.get_provider_class", return_value=FakeProvider):
+        models = await fetch_live_models("PollinationsAI")
+
+    assert len(models) == 3
+    assert all(isinstance(m, ModelInfo) for m in models)
+    assert [m.alias for m in models] == ["gpt-5.4", "gpt-5.4-mini", "openai-large"]
+
+
+@pytest.mark.asyncio
+async def test_fetch_live_models_passes_api_key() -> None:
+    from gpt4free.providers import fetch_live_models
+
+    captured = {}
+
+    class FakeProvider:
+        @classmethod
+        def get_models(cls, **kwargs):
+            captured.update(kwargs)
+            return ["model-a"]
+
+    with patch("gpt4free.providers.get_provider_class", return_value=FakeProvider):
+        await fetch_live_models("Cerebras", api_key="sk-test")
+
+    assert captured.get("api_key") == "sk-test"
+
+
+@pytest.mark.asyncio
+async def test_fetch_live_models_handles_exception_gracefully() -> None:
+    from gpt4free.providers import fetch_live_models
+
+    class FakeProvider:
+        @classmethod
+        def get_models(cls, **kwargs):
+            raise RuntimeError("network unreachable")
+
+    with patch("gpt4free.providers.get_provider_class", return_value=FakeProvider):
+        models = await fetch_live_models("PollinationsAI")
+    assert models == []
+
+
+@pytest.mark.asyncio
+async def test_fetch_live_models_handles_timeout_gracefully() -> None:
+    import asyncio as _asyncio
+    from gpt4free.providers import fetch_live_models
+
+    class FakeProvider:
+        @classmethod
+        def get_models(cls, **kwargs):
+            import time
+            time.sleep(0.2)
+            return ["slow-model"]
+
+    with patch("gpt4free.providers.get_provider_class", return_value=FakeProvider):
+        models = await fetch_live_models("PollinationsAI", timeout=0.01)
+    assert models == []
+
+
+@pytest.mark.asyncio
+async def test_fetch_live_models_empty_result_returns_empty_list() -> None:
+    from gpt4free.providers import fetch_live_models
+
+    class FakeProvider:
+        @classmethod
+        def get_models(cls, **kwargs):
+            return []
+
+    with patch("gpt4free.providers.get_provider_class", return_value=FakeProvider):
+        models = await fetch_live_models("PollinationsAI")
+    assert models == []
