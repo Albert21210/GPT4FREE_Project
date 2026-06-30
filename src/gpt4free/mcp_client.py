@@ -87,3 +87,33 @@ class MCPToolSource:
         for tool in self.tools:
             registry.register(tool)
         return self.tools
+    
+    
+@asynccontextmanager
+async def connect_mcp_stdio(
+    command: str,
+    args: Optional[list[str]] = None,
+    env: Optional[dict[str, str]] = None,
+    server_name: Optional[str] = None,
+) -> AsyncIterator[MCPToolSource]:
+    """
+    Launch a local MCP server as a subprocess and connect to it over stdio.
+
+    `command`/`args` are exactly what you'd type to run the server yourself,
+    e.g. command="python", args=["my_mcp_server.py"], or
+    command="npx", args=["-y", "@some/mcp-server"].
+    """
+    if not MCP_AVAILABLE:
+        raise MCPNotInstalledError()
+
+    params = StdioServerParameters(command=command, args=args or [], env=env)
+    name = server_name or command
+
+    async with AsyncExitStack() as stack:
+        read, write = await stack.enter_async_context(stdio_client(params))
+        session = await stack.enter_async_context(ClientSession(read, write))
+        await session.initialize()
+
+        source = MCPToolSource(server_name=name, session=session)
+        await source.discover()
+        yield source
