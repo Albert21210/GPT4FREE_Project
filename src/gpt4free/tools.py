@@ -49,6 +49,32 @@ class ToolRegistry:
     def register(self, tool: Tool) -> Tool:
         self._tools[tool.name] = tool
         return tool
+    
+    def skill(
+        self,
+        name: str,
+        description: str,
+        parameters: Optional[dict[str, Any]] = None,
+    ) -> Callable[[ToolHandler], ToolHandler]:
+        """Decorator form: register a plain python function as a skill.
+
+        Example:
+            tools = ToolRegistry()
+
+            @tools.skill(
+                "get_weather",
+                "Get the current weather for a city",
+                {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]},
+            )
+            async def get_weather(city: str) -> str:
+                return f"Sunny in {city}"
+        """
+        def _decorator(fn: ToolHandler) -> ToolHandler:
+            self.register(Tool(name=name, description=description,
+                                parameters=parameters or {"type": "object", "properties": {}},
+                                handler=fn))
+            return fn
+        return _decorator
 
     def get(self, name: str) -> Optional[Tool]:
         return self._tools.get(name)
