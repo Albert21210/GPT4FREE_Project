@@ -6,10 +6,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from gpt4free.chat import ChatSession, Message, _extract_chunk
+from gpt4free.chat import ChatSession, Message, _extract_chunk, fallback_chain
 
 
-# _extract_chunk 
+# _extract_chunk
 
 def test_extract_chunk_plain_string() -> None:
     assert _extract_chunk("hello") == "hello"
@@ -122,7 +122,7 @@ async def test_ask_once_fallback_on_error() -> None:
     assert result == "legacy reply"
 
 
-# fallback_chain 
+# fallback_chain
 
 def test_fallback_chain_starts_with_primary() -> None:
     chain = fallback_chain("PollinationsAI", "openai")
@@ -160,8 +160,8 @@ def test_fallback_chain_unknown_provider_still_gets_fallbacks() -> None:
     chain = fallback_chain("SomeRandomProvider", "some-model")
     assert chain[0] == ("SomeRandomProvider", "some-model")
     assert len(chain) > 1
-    
-    
+
+
 # ChatSession auto-fallback
 
 @pytest.mark.asyncio
@@ -211,7 +211,6 @@ async def test_ask_once_no_fallback_when_disabled() -> None:
         await s.ask_once()
 
     assert mock_client.chat.completions.create.await_count == 1
-
 
 
 # proxy
@@ -277,7 +276,7 @@ async def test_ask_once_passes_proxy_kwarg_for_geoblocked_provider() -> None:
     assert result == "ok via proxy"
     _, kwargs = mock_client.chat.completions.create.call_args
     assert kwargs.get("proxy") == "socks5://127.0.0.1:1080"
-    
+
 
 # api_keys / custom_providers (_resolve)
 
@@ -341,3 +340,73 @@ def test_resolve_custom_provider_without_api_key() -> None:
         _, extra = s._resolve("MyLocalServer")
     assert "api_key" not in extra
     assert extra["base_url"] == "http://localhost:8080/v1"
+
+
+@pytest.mark.asyncio
+async def test_ask_once_passes_api_key_to_create() -> None:
+    mock_message = MagicMock()
+    mock_message.content = "answer with key"
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
+
+    with patch("gpt4free.chat.AsyncClient", return_value=mock_client), \
+         patch("gpt4free.chat.get_provider_class", return_value=MagicMock()):
+        s = ChatSession(
+            provider="Cerebras",
+            model="llama-3.3-70b",
+            api_keys={"Cerebras": "sk-test-456"},
+            auto_fallback=False,
+        )
+        s.push_user("hi")
+        result = await s.ask_once()
+
+    assert result == "answer with key"
+    _, kwargs = mock_client.chat.completions.create.call_args
+    assert kwargs.get("api_key") == "sk-test-456"
+
+
+@pytest.mark.asyncio
+async def test_ask_once_calls_custom_provider_with_base_url() -> None:
+    mock_message = MagicMock()
+    mock_message.content = "from custom server"
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+
+    mock_client_instance = MagicMock()
+    mock_client_instance.chat.completions.create = AsyncMock(return_value=mock_response)
+    mock_async_client_cls = MagicMock(return_value=mock_client_instance)
+
+    with patch("gpt4free.chat.AsyncClient", mock_async_client_cls), \
+         patch("gpt4free.chat.CustomProvider", "CUSTOM_PROVIDER_CLASS"):
+        s = ChatSession(
+            provider="MyLocalServer",
+            model="local-model",
+            custom_providers={
+                "MyLocalServer": {
+                    "base_url": "http://localhost:8080/v1",
+                    "api_key": "local-key",
+                    "models": [{"alias": "local-model", "display": "Local Model"}],
+                }
+            },
+            auto_fallback=False,
+        )
+        s.push_user("hi")
+        result = await s.ask_once()
+
+    assert result == "from custom server"
+
+    # AsyncClient(provider=...) was constructed with g4f's generic Custom class
+    _, ctor_kwargs = mock_async_client_cls.call_args
+    assert ctor_kwargs.get("provider") == "CUSTOM_PROVIDER_CLASS"
+
+    # base_url/api_key were forwarded to create()
+    _, create_kwargs = mock_client_instance.chat.completions.create.call_args
+    assert create_kwargs.get("base_url") == "http://localhost:8080/v1"
+    assert create_kwargs.get("api_key") == "local-key"
