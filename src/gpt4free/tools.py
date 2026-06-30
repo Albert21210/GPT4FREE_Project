@@ -64,3 +64,15 @@ class ToolRegistry:
 
     def to_openai_schema(self) -> list[dict[str, Any]]:
         return [t.to_openai_schema() for t in self._tools.values()]
+    
+    async def execute(self, name: str, arguments: dict[str, Any]) -> str:
+        tool = self.get(name)
+        if tool is None:
+            return json.dumps({"error": f"unknown tool '{name}'"})
+        try:
+            return await tool.call(**arguments)
+        except Exception as exc:  # noqa: BLE001
+            return json.dumps({"error": str(exc)})
+        
+    
+    
