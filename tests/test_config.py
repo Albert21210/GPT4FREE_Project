@@ -344,3 +344,31 @@ class TestProxy:
         cfg = AppConfig.from_dict(v1_data)
         assert cfg.proxy is None
         assert cfg.force_proxy is False
+
+class TestApiKeysAndCustomProviders:
+
+    def test_default_api_keys_empty(self):
+        cfg = AppConfig()
+        assert cfg.api_keys == {}
+        assert cfg.get_api_key("Cerebras") is None
+
+    def test_set_and_get_api_key(self):
+        cfg = AppConfig()
+        cfg.set_api_key("Cerebras", "sk-test123")
+        assert cfg.get_api_key("Cerebras") == "sk-test123"
+
+    def test_set_api_key_empty_string_removes(self):
+        cfg = AppConfig()
+        cfg.set_api_key("Cerebras", "sk-test123")
+        cfg.set_api_key("Cerebras", "")
+        assert cfg.get_api_key("Cerebras") is None
+
+    def test_api_key_roundtrip_through_save_load(self, tmp_path):
+        with patch("gpt4free.config.user_config_dir", return_value=str(tmp_path)):
+            mgr = ConfigManager()
+            cfg = AppConfig()
+            cfg.set_api_key("Gemini", "sk-abc")
+            mgr.save(cfg)
+
+            reloaded = mgr.load()
+            assert reloaded.get_api_key("Gemini") == "sk-abc"
