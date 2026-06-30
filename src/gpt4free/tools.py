@@ -38,3 +38,29 @@ class Tool:
         if isinstance(result, str):
             return result
         return json.dumps(result, ensure_ascii=False, default=str)
+    
+    
+class ToolRegistry:
+    """Holds the set of tools/skills available to a ChatSession."""
+
+    def __init__(self) -> None:
+        self._tools: dict[str, Tool] = {}
+
+    def register(self, tool: Tool) -> Tool:
+        self._tools[tool.name] = tool
+        return tool
+
+    def get(self, name: str) -> Optional[Tool]:
+        return self._tools.get(name)
+
+    def __len__(self) -> int:
+        return len(self._tools)
+
+    def __contains__(self, name: str) -> bool:
+        return name in self._tools
+
+    def list_tools(self) -> list[Tool]:
+        return list(self._tools.values())
+
+    def to_openai_schema(self) -> list[dict[str, Any]]:
+        return [t.to_openai_schema() for t in self._tools.values()]
