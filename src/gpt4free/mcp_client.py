@@ -26,3 +26,26 @@ class MCPNotInstalledError(RuntimeError):
             "The 'mcp' package is required for MCP server integration. "
             "Install it with: pip install mcp"
         )
+        
+        
+def _extract_text(result: Any) -> str:
+    """Flatten an MCP CallToolResult into a plain string for the model."""
+    if getattr(result, "isError", False):
+        parts = [getattr(c, "text", str(c)) for c in getattr(result, "content", [])]
+        return json.dumps({"error": " ".join(parts) or "tool call failed"})
+
+    content = getattr(result, "content", None) or []
+    texts = [t for t in (getattr(c, "text", None) for c in content) if t]
+    if texts:
+        return "\n".join(texts)
+
+    structured = getattr(result, "structuredContent", None)
+    if structured is not None:
+        return json.dumps(structured, ensure_ascii=False, default=str)
+
+    if content:
+        # Non-text content (images, embedded resources, ...) — describe it
+        # rather than silently dropping it, so the model knows something came back.
+        return json.dumps([{"type": getattr(c, "type", "unknown")} for c in content], ensure_ascii=False)
+
+    return ""
