@@ -1,3 +1,24 @@
+"""Real MCP (Model Context Protocol) client integration.
+
+Connects to external MCP servers — local (stdio, i.e. a subprocess) or
+remote (Streamable HTTP) — lists their tools, and exposes each one as a
+regular `gpt4free.tools.Tool`, so `ChatSession.ask_with_tools()` can call
+MCP-provided tools exactly like local Python skills, with zero special-casing.
+
+Requires the optional `mcp` package (the official MCP Python SDK):
+    pip install mcp
+
+Usage (stdio — e.g. a local MCP server script):
+    async with connect_mcp_stdio("python", ["my_server.py"]) as mcp_source:
+        mcp_source.register_into(tools_registry)
+        session = ChatSession(provider="PollinationsAI", model="openai", tools=tools_registry)
+        reply = await session.ask_with_tools()
+
+Usage (remote — Streamable HTTP MCP server):
+    async with connect_mcp_http("https://example.com/mcp") as mcp_source:
+        mcp_source.register_into(tools_registry)
+"""
+
 from __future__ import annotations
 
 import json
@@ -26,8 +47,8 @@ class MCPNotInstalledError(RuntimeError):
             "The 'mcp' package is required for MCP server integration. "
             "Install it with: pip install mcp"
         )
-        
-        
+
+
 def _extract_text(result: Any) -> str:
     """Flatten an MCP CallToolResult into a plain string for the model."""
     if getattr(result, "isError", False):
@@ -87,8 +108,8 @@ class MCPToolSource:
         for tool in self.tools:
             registry.register(tool)
         return self.tools
-    
-    
+
+
 @asynccontextmanager
 async def connect_mcp_stdio(
     command: str,
@@ -111,6 +132,28 @@ async def connect_mcp_stdio(
 
     async with AsyncExitStack() as stack:
         read, write = await stack.enter_async_context(stdio_client(params))
+        session = await stack.enter_async_context(ClientSession(read, write))
+        await session.initialize()
+
+        source = MCPToolSource(server_name=name, session=session)
+        await source.discover()
+        yield source
+
+
+@asynccontextmanager
+async def connect_mcp_http(
+    url: str,
+    headers: Optional[dict[str, str]] = None,
+    server_name: Optional[str] = None,
+) -> AsyncIterator[MCPToolSource]:
+    """Connect to a remote MCP server over Streamable HTTP."""
+    if not MCP_AVAILABLE:
+        raise MCPNotInstalledError()
+
+    name = server_name or url
+
+    async with AsyncExitStack() as stack:
+        read, write, _ = await stack.enter_async_context(streamablehttp_client(url, headers=headers))
         session = await stack.enter_async_context(ClientSession(read, write))
         await session.initialize()
 
