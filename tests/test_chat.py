@@ -120,3 +120,43 @@ async def test_ask_once_fallback_on_error() -> None:
         result = await s.ask_once()
 
     assert result == "legacy reply"
+
+
+# fallback_chain 
+
+def test_fallback_chain_starts_with_primary() -> None:
+    chain = fallback_chain("PollinationsAI", "openai")
+    assert chain[0] == ("PollinationsAI", "openai")
+
+
+def test_fallback_chain_no_duplicate_primary() -> None:
+    """Primary provider should not also appear later in the chain."""
+    chain = fallback_chain("Qwen", "qwen3.7-plus")
+    names = [name for name, _ in chain]
+    assert names.count("Qwen") == 1
+
+
+def test_fallback_chain_prefers_no_auth_providers() -> None:
+    """No-auth providers should be tried before auth-required ones."""
+    from gpt4free.providers import NO_AUTH_PROVIDERS
+
+    chain = fallback_chain("Grok", "grok-4")  # Grok itself needs auth
+    fallback_names = [name for name, _ in chain[1:]]
+    no_auth_in_chain = [n for n in fallback_names if n in NO_AUTH_PROVIDERS]
+    auth_in_chain = [n for n in fallback_names if n not in NO_AUTH_PROVIDERS]
+    if no_auth_in_chain and auth_in_chain:
+        assert fallback_names.index(no_auth_in_chain[0]) < fallback_names.index(auth_in_chain[0])
+
+
+def test_fallback_chain_respects_max_attempts() -> None:
+    from gpt4free.chat import MAX_FALLBACK_ATTEMPTS
+
+    chain = fallback_chain("PollinationsAI", "openai")
+    assert len(chain) <= MAX_FALLBACK_ATTEMPTS
+
+
+def test_fallback_chain_unknown_provider_still_gets_fallbacks() -> None:
+    """Even a provider with no entry in WORKING_PROVIDERS gets a fallback chain."""
+    chain = fallback_chain("SomeRandomProvider", "some-model")
+    assert chain[0] == ("SomeRandomProvider", "some-model")
+    assert len(chain) > 1
