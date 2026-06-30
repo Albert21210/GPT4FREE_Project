@@ -1,21 +1,29 @@
+"""Manual smoke-check script: hits real provider APIs over the network to see
+which (provider, model) pairs currently respond. NOT a pytest test (functions
+are prefixed `check_*`, not `test_*`, on purpose — pytest would otherwise try
+to collect `check_model(provider_name, model)` as a test needing fixtures).
+
+Run directly:
+    python tests/test_all_models.py
+"""
+
 import asyncio
+
 import g4f
 
-PROVIDERS_MODELS = {
-    "PollinationsAI": ["openai", "openai-large", "deepseek-r1", "deepseek-v3", "mistral", "llama", "qwen-coder-large", "qwen-large", "phi"],
-    "BlackboxPro": ["gpt-4o", "gpt-4o-mini", "deepseek-r1", "deepseek-v3", "gemini-2.0-flash", "llama-3.3-70b", "mistral-large"],
-    "ChatGptEs": ["gpt-4o", "gpt-4o-mini"],
-    "Nexra": ["gpt-4o", "gpt-4", "gpt-3.5-turbo"],
-    "DeepInfraChat": ["meta-llama/Meta-Llama-3.1-70B-Instruct", "meta-llama/Meta-Llama-3.1-8B-Instruct", "mistralai/Mistral-7B-Instruct-v0.3"],
-    "DuckDuckGo": ["gpt-4o-mini", "claude-3-haiku", "llama-3.3-70b", "mixtral-8x7b"],
-}
+from gpt4free.providers import WORKING_PROVIDERS
 
-async def test_model(provider_name, model):
+# Use the live, maintained registry from gpt4free.providers instead of a
+# hardcoded (and quickly stale) duplicate list.
+PROVIDERS_MODELS = {name: [alias for alias, _ in models] for name, models in WORKING_PROVIDERS.items()}
+
+
+async def check_model(provider_name: str, model: str) -> tuple[bool, str]:
     try:
         provider = getattr(g4f.Provider, provider_name, None)
         if not provider:
             return False, "Provider not found"
-        
+
         print(f"Testing {provider_name}/{model}...")
         response = await asyncio.to_thread(
             g4f.ChatCompletion.create,
@@ -34,21 +42,22 @@ async def test_model(provider_name, model):
         print(f"❌ {provider_name}/{model} FAILED: {error_msg}")
         return False, error_msg
 
-async def main():
+
+async def main() -> None:
     print("🔍 TESTING ALL PROVIDERS AND MODELS...\n")
-    working = {}
-    
+    working: dict[str, list[str]] = {}
+
     for provider, models in PROVIDERS_MODELS.items():
         working[provider] = []
         for model in models:
-            success, msg = await test_model(provider, model)
+            success, _msg = await check_model(provider, model)
             if success:
                 working[provider].append(model)
-            await asyncio.sleep(1)  # Задержка чтобы не банить
-    
-    print("\n" + "="*60)
+            await asyncio.sleep(1)  # rate-limit friendly delay
+
+    print("\n" + "=" * 60)
     print("📊 WORKING MODELS BY PROVIDER:")
-    print("="*60)
+    print("=" * 60)
     for provider, models in working.items():
         if models:
             print(f"\n✅ {provider}:")
@@ -56,6 +65,7 @@ async def main():
                 print(f"   - {model}")
         else:
             print(f"\n❌ {provider}: No working models")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
