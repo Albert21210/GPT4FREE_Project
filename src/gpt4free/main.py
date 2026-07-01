@@ -380,3 +380,9 @@ def cmd_custom_providers(
     if not cfg.custom_providers:
         console.print("No custom providers configured. Use --add to register one.")
         return
+    from rich.table import Table
+    tbl = Table()
+    tbl.add_column("Name")
+    tbl.add_column("Base URL")
+    tbl.add_column("Key set")
+    tbl.add_column("Models")
