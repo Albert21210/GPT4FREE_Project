@@ -99,7 +99,7 @@ class TestCustomProvidersCommand:
             ],
         )
         show_result = runner.invoke(app, ["custom-providers", "--show"])
-        assert "yes" in show_result.stdout  # key-set indicator
+        assert "yes" in show_result.stdout  
         assert "sk-secret" not in show_result.stdout
 
     def test_remove(self, isolated_config) -> None:
