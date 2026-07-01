@@ -171,3 +171,31 @@ def cmd_models(
         f"\n[dim]Use any of these right away: "
         f"gpt4free -P {provider} -m \"<model id>\"[/dim]"
     )
+
+@app.command("status")
+def cmd_status(
+    timeout: Annotated[
+        float,
+        typer.Option("--timeout", "-t", help="Probe timeout per provider (seconds)"),
+    ] = 12.0,
+) -> None:
+    """Probe all providers and display live status."""
+    import os
+    from gpt4free.config import load_config
+    from gpt4free.providers import list_providers, probe_all, PROBE_TIMEOUT
+    import gpt4free.providers as prov_mod
+
+    prov_mod.PROBE_TIMEOUT = timeout
+    cfg = load_config()
+    providers = list_providers(cfg.custom_providers)
+    proxy = os.environ.get("G4F_PROXY") or cfg.proxy or None
+
+    with console.status(
+        "[bold #6c63ff]Probing providers…[/bold #6c63ff]",
+        spinner="dots",
+    ):
+        results = asyncio.run(probe_all(providers, proxy=proxy, api_keys=cfg.api_keys))
+
+    from gpt4free.render import render_provider_table
+
+    render_provider_table(results)
