@@ -290,3 +290,9 @@ def cmd_keys(
         save_config(cfg)
         console.print(f"[green]✓[/green] Key set for [bold]{name}[/bold]")
         return
+
+    if remove:
+        cfg.set_api_key(remove, "")
+        save_config(cfg)
+        console.print(f"[green]✓[/green] Key removed for [bold]{remove}[/bold]")
+        return
