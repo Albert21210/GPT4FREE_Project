@@ -370,3 +370,9 @@ def cmd_custom_providers(
         console.print(f"[green]✓[/green] Custom provider [bold]{name}[/bold] added "
                       f"({len(model_list)} model(s)) → {base_url}")
         return
+
+    if remove:
+        cfg.remove_custom_provider(remove)
+        save_config(cfg)
+        console.print(f"[green]✓[/green] Custom provider [bold]{remove}[/bold] removed")
+        return
