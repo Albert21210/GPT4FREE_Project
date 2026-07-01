@@ -37,3 +37,13 @@ async def test_register_into_populates_registry() -> None:
     assert len(registry) == 2
     assert "dummy.add" in registry
     assert "dummy.greet" in registry
+    
+    
+@pytest.mark.asyncio
+async def test_call_real_mcp_tool_add() -> None:
+    registry = ToolRegistry()
+    async with connect_mcp_stdio(sys.executable, [FIXTURE_SERVER], server_name="dummy") as source:
+        source.register_into(registry)
+        result = await registry.execute("dummy.add", {"a": 3, "b": 4})
+
+    assert result == "7"
