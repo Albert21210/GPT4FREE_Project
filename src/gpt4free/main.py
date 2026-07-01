@@ -395,3 +395,14 @@ def cmd_custom_providers(
             model_names,
         )
     console.print(tbl)
+
+def _cli_prompt(
+    text: str,
+    provider: str,
+    model: str,
+    stream: bool,
+    api_keys: Optional[dict[str, str]] = None,
+    custom_providers: Optional[dict[str, dict]] = None,
+    proxy: Optional[str] = None,
+    force_proxy: bool = False,
+) -> None:
