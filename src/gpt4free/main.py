@@ -272,3 +272,7 @@ def cmd_keys(
     Keys are stored locally in your config file, never sent anywhere except
     directly to that provider's API.
     """
+    from gpt4free.config import load_config, save_config
+    from gpt4free.providers import list_providers
+
+    cfg = load_config()
