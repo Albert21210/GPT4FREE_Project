@@ -361,3 +361,7 @@ def cmd_custom_providers(
         if not models:
             console.print('[red]✗[/red] --models is required, e.g. --models "llama3,mixtral"')
             raise typer.Exit(code=1)
+        model_list = [
+            {"alias": m.strip(), "display": m.strip()}
+            for m in models.split(",") if m.strip()
+        ]
