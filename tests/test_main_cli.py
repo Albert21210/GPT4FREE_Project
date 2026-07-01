@@ -89,3 +89,49 @@ class TestCustomProvidersCommand:
         assert "MyServer" in show_result.stdout
         assert "llama3" in show_result.stdout
         assert "mixtral" in show_result.stdout
+
+    def test_add_with_api_key_masks_it_in_show(self, isolated_config) -> None:
+        runner.invoke(
+            app,
+            [
+                "custom-providers", "--add", "Together=https://api.together.xyz/v1",
+                "--models", "m1", "--api-key", "sk-secret",
+            ],
+        )
+        show_result = runner.invoke(app, ["custom-providers", "--show"])
+        assert "yes" in show_result.stdout  # key-set indicator
+        assert "sk-secret" not in show_result.stdout
+
+    def test_remove(self, isolated_config) -> None:
+        runner.invoke(
+            app,
+            ["custom-providers", "--add", "MyServer=http://localhost:8000/v1", "--models", "llama3"],
+        )
+        remove_result = runner.invoke(app, ["custom-providers", "--remove", "MyServer"])
+        assert remove_result.exit_code == 0
+
+        from gpt4free.config import load_config
+        cfg = load_config()
+        assert "MyServer" not in cfg.custom_providers
+
+    def test_added_provider_appears_in_providers_list(self, isolated_config) -> None:
+        runner.invoke(
+            app,
+            ["custom-providers", "--add", "MyServer=http://localhost:8000/v1", "--models", "llama3"],
+        )
+        result = runner.invoke(app, ["providers"])
+        assert result.exit_code == 0
+        assert "MyServer" in result.stdout
+
+    def test_model_list_parsing_strips_whitespace(self, isolated_config) -> None:
+        runner.invoke(
+            app,
+            [
+                "custom-providers", "--add", "MyServer=http://localhost:8000/v1",
+                "--models", " llama3 , mixtral ,  ",
+            ],
+        )
+        from gpt4free.config import load_config
+        cfg = load_config()
+        aliases = [m["alias"] for m in cfg.custom_providers["MyServer"]["models"]]
+        assert aliases == ["llama3", "mixtral"]
