@@ -31,7 +31,7 @@ def test_parse_tool_arguments_already_dict() -> None:
 
 def test_parse_tool_arguments_non_dict_json() -> None:
     assert parse_tool_arguments("[1, 2, 3]") == {}
-    
+
 
 # Tool / ToolRegistry
 
@@ -41,8 +41,8 @@ def test_tool_to_openai_schema() -> None:
     assert schema["type"] == "function"
     assert schema["function"]["name"] == "ping"
     assert schema["function"]["description"] == "Replies pong"
-    
-    
+
+
 @pytest.mark.asyncio
 async def test_tool_call_sync_handler() -> None:
     tool = Tool(name="add", description="adds two numbers", handler=lambda a, b: a + b)
@@ -86,8 +86,8 @@ def test_registry_to_openai_schema_multiple_tools() -> None:
     schema = registry.to_openai_schema()
     assert len(schema) == 2
     assert {s["function"]["name"] for s in schema} == {"a", "b"}
-    
-    
+
+
 @pytest.mark.asyncio
 async def test_registry_execute_unknown_tool() -> None:
     registry = ToolRegistry()
@@ -101,8 +101,8 @@ async def test_registry_execute_known_tool() -> None:
     registry.register(Tool(name="double", description="doubles a number", handler=lambda n: n * 2))
     result = await registry.execute("double", {"n": 4})
     assert result == "8"
-    
-    
+
+
 # ChatSession.ask_with_tools
 
 @pytest.mark.asyncio
@@ -124,8 +124,8 @@ async def test_ask_with_tools_no_tools_falls_back_to_ask_once() -> None:
         result = await s.ask_with_tools()
 
     assert result == "plain answer"
-    
-    
+
+
 @pytest.mark.asyncio
 async def test_ask_with_tools_executes_tool_then_returns_final_answer() -> None:
     registry = ToolRegistry()
@@ -173,4 +173,65 @@ async def test_ask_with_tools_executes_tool_then_returns_final_answer() -> None:
     assert "tool" in roles
     tool_msg = next(m for m in s.messages if m.role == "tool")
     assert tool_msg.content == "Sunny in Helsinki"
+    assert mock_client.chat.completions.create.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_ask_with_tools_passes_schema_to_create() -> None:
+    registry = ToolRegistry()
+    registry.register(Tool(name="noop", description="does nothing", handler=lambda: "ok"))
+
+    mock_message = MagicMock()
+    mock_message.tool_calls = None
+    mock_message.content = "done"
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
+
+    with patch("gpt4free.chat.AsyncClient", return_value=mock_client), \
+         patch("gpt4free.chat.get_provider_class", return_value=MagicMock()):
+        s = ChatSession(provider="PollinationsAI", model="openai", tools=registry, auto_fallback=False)
+        s.push_user("hi")
+        await s.ask_with_tools()
+
+    _, kwargs = mock_client.chat.completions.create.call_args
+    assert "tools" in kwargs
+    assert kwargs["tools"][0]["function"]["name"] == "noop"
+
+
+@pytest.mark.asyncio
+async def test_ask_with_tools_respects_max_iterations() -> None:
+    """If the model keeps requesting tool calls forever, the loop should
+    bail out after max_tool_iterations rather than spinning forever."""
+    registry = ToolRegistry()
+    registry.register(Tool(name="loop", description="loops", handler=lambda: "again"))
+
+    tool_call = MagicMock()
+    tool_call.id = "call_x"
+    tool_call.function.name = "loop"
+    tool_call.function.arguments = "{}"
+
+    looping_message = MagicMock()
+    looping_message.tool_calls = [tool_call]
+    looping_message.content = None
+    looping_choice = MagicMock()
+    looping_choice.message = looping_message
+    looping_response = MagicMock()
+    looping_response.choices = [looping_choice]
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(return_value=looping_response)
+
+    with patch("gpt4free.chat.AsyncClient", return_value=mock_client), \
+         patch("gpt4free.chat.get_provider_class", return_value=MagicMock()):
+        s = ChatSession(provider="PollinationsAI", model="openai", tools=registry,
+                         auto_fallback=False, max_tool_iterations=2)
+        s.push_user("loop forever")
+        result = await s.ask_with_tools()
+
+    assert "max_tool_iterations" in result
     assert mock_client.chat.completions.create.await_count == 2
