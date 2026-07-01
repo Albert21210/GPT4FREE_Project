@@ -345,3 +345,6 @@ def cmd_custom_providers(
       gpt4free custom-providers --add "MyServer=http://localhost:8000/v1" --models "llama3,mixtral"
       gpt4free custom-providers --add "Together=https://api.together.xyz/v1" --models "meta-llama/Llama-3-70b" --api-key sk-...
     """
+    from gpt4free.config import load_config, save_config
+
+    cfg = load_config()
