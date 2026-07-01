@@ -41,3 +41,27 @@ def test_tool_to_openai_schema() -> None:
     assert schema["type"] == "function"
     assert schema["function"]["name"] == "ping"
     assert schema["function"]["description"] == "Replies pong"
+    
+    
+@pytest.mark.asyncio
+async def test_tool_call_sync_handler() -> None:
+    tool = Tool(name="add", description="adds two numbers", handler=lambda a, b: a + b)
+    result = await tool.call(a=2, b=3)
+    assert result == "5"  # non-str results get json-encoded
+
+
+@pytest.mark.asyncio
+async def test_tool_call_async_handler() -> None:
+    async def handler(city: str) -> str:
+        return f"Sunny in {city}"
+
+    tool = Tool(name="weather", description="weather lookup", handler=handler)
+    result = await tool.call(city="Helsinki")
+    assert result == "Sunny in Helsinki"
+
+
+@pytest.mark.asyncio
+async def test_tool_call_no_handler_returns_error() -> None:
+    tool = Tool(name="broken", description="no handler")
+    result = await tool.call()
+    assert "error" in result
