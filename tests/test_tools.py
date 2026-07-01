@@ -65,3 +65,24 @@ async def test_tool_call_no_handler_returns_error() -> None:
     tool = Tool(name="broken", description="no handler")
     result = await tool.call()
     assert "error" in result
+
+
+def test_registry_skill_decorator() -> None:
+    registry = ToolRegistry()
+
+    @registry.skill("echo", "echoes input", {"type": "object", "properties": {"text": {"type": "string"}}})
+    def echo(text: str) -> str:
+        return text
+
+    assert "echo" in registry
+    assert len(registry) == 1
+    assert registry.get("echo") is not None
+
+
+def test_registry_to_openai_schema_multiple_tools() -> None:
+    registry = ToolRegistry()
+    registry.register(Tool(name="a", description="A", handler=lambda: "a"))
+    registry.register(Tool(name="b", description="B", handler=lambda: "b"))
+    schema = registry.to_openai_schema()
+    assert len(schema) == 2
+    assert {s["function"]["name"] for s in schema} == {"a", "b"}
