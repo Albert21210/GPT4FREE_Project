@@ -309,3 +309,33 @@ def cmd_keys(
         has_key = "[green]yes[/green]" if cfg.get_api_key(name) else "[dim]no[/dim]"
         tbl.add_row(name, has_key)
     console.print(tbl)
+
+@app.command("custom-providers")
+def cmd_custom_providers(
+    add: Annotated[
+        Optional[str],
+        typer.Option(
+            "--add",
+            help='Add as "Name=https://base.url/v1", e.g. --add "MyServer=http://localhost:8000/v1"',
+        ),
+    ] = None,
+    models: Annotated[
+        Optional[str],
+        typer.Option(
+            "--models",
+            help='Comma-separated model aliases to register with --add, e.g. --models "llama3,mixtral"',
+        ),
+    ] = None,
+    api_key: Annotated[
+        Optional[str],
+        typer.Option("--api-key", help="API key to send to this custom endpoint, if it needs one"),
+    ] = None,
+    remove: Annotated[
+        Optional[str],
+        typer.Option("--remove", help="Remove a custom provider by name"),
+    ] = None,
+    show: Annotated[
+        bool,
+        typer.Option("--show", help="List configured custom providers"),
+    ] = False,
+) -> None:
