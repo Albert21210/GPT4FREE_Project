@@ -376,3 +376,7 @@ def cmd_custom_providers(
         save_config(cfg)
         console.print(f"[green]✓[/green] Custom provider [bold]{remove}[/bold] removed")
         return
+
+    if not cfg.custom_providers:
+        console.print("No custom providers configured. Use --add to register one.")
+        return
