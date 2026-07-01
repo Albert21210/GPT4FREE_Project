@@ -56,3 +56,36 @@ class TestKeysCommand:
         from gpt4free.config import load_config
         cfg = load_config()
         assert cfg.get_api_key("Gemini") == "sk-abc"
+
+class TestCustomProvidersCommand:
+    def test_show_empty_by_default(self, isolated_config) -> None:
+        result = runner.invoke(app, ["custom-providers", "--show"])
+        assert result.exit_code == 0
+        assert "No custom providers" in result.stdout
+
+    def test_add_requires_equals_sign(self, isolated_config) -> None:
+        result = runner.invoke(app, ["custom-providers", "--add", "BadFormat", "--models", "m1"])
+        assert result.exit_code != 0
+
+    def test_add_requires_models(self, isolated_config) -> None:
+        result = runner.invoke(
+            app, ["custom-providers", "--add", "MyServer=http://localhost:8000/v1"]
+        )
+        assert result.exit_code != 0
+
+    def test_add_and_show(self, isolated_config) -> None:
+        add_result = runner.invoke(
+            app,
+            [
+                "custom-providers", "--add", "MyServer=http://localhost:8000/v1",
+                "--models", "llama3,mixtral",
+            ],
+        )
+        assert add_result.exit_code == 0
+        assert "MyServer" in add_result.stdout
+
+        show_result = runner.invoke(app, ["custom-providers", "--show"])
+        assert show_result.exit_code == 0
+        assert "MyServer" in show_result.stdout
+        assert "llama3" in show_result.stdout
+        assert "mixtral" in show_result.stdout
