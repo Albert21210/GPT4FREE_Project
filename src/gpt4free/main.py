@@ -247,3 +247,22 @@ def cmd_config(
 
     if show or (not provider and not model and not proxy and not clear_proxy):
         console.print_json(json.dumps(cfg.to_dict(), indent=2))
+
+@app.command("keys")
+def cmd_keys(
+    set_: Annotated[
+        Optional[str],
+        typer.Option(
+            "--set",
+            help='Set a key as "ProviderName=sk-...", e.g. --set "Cerebras=sk-abc123"',
+        ),
+    ] = None,
+    remove: Annotated[
+        Optional[str],
+        typer.Option("--remove", help="Remove the key for this provider name"),
+    ] = None,
+    show: Annotated[
+        bool,
+        typer.Option("--show", help="List configured providers and whether a key is set (keys themselves are masked)"),
+    ] = False,
+) -> None:
