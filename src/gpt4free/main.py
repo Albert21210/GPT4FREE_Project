@@ -276,3 +276,17 @@ def cmd_keys(
     from gpt4free.providers import list_providers
 
     cfg = load_config()
+
+    if set_:
+        if "=" not in set_:
+            console.print('[red]✗[/red] Expected format: --set "ProviderName=your-key"')
+            raise typer.Exit(code=1)
+        name, _, key = set_.partition("=")
+        name, key = name.strip(), key.strip()
+        if not key:
+            console.print("[red]✗[/red] Key cannot be empty")
+            raise typer.Exit(code=1)
+        cfg.set_api_key(name, key)
+        save_config(cfg)
+        console.print(f"[green]✓[/green] Key set for [bold]{name}[/bold]")
+        return
