@@ -365,3 +365,8 @@ def cmd_custom_providers(
             {"alias": m.strip(), "display": m.strip()}
             for m in models.split(",") if m.strip()
         ]
+        cfg.add_custom_provider(name, base_url, model_list, api_key=api_key or "")
+        save_config(cfg)
+        console.print(f"[green]✓[/green] Custom provider [bold]{name}[/bold] added "
+                      f"({len(model_list)} model(s)) → {base_url}")
+        return
