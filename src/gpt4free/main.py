@@ -80,3 +80,45 @@ def main(
 
         GPT4FREETUI(cfg).run()
       
+@app.command("providers")
+def cmd_providers(
+    verbose: Annotated[
+        bool,
+        typer.Option("--verbose", "-v", help="Show all models per provider"),
+    ] = False,
+) -> None:
+    """List all available providers and their models."""
+    from rich.table import Table
+    from gpt4free.config import load_config
+    from gpt4free.providers import list_providers, STATUS_COLOR, STATUS_EMOJI
+
+    cfg = load_config()
+    infos = list_providers(cfg.custom_providers)
+    table = Table(
+        title="[bold #6c63ff]GPT4FREE — Providers[/bold #6c63ff]",
+        border_style="#1a1d2e",
+        header_style="bold #6c63ff",
+        show_lines=True,
+    )
+    table.add_column("Provider", style="bold white", min_width=14)
+    table.add_column("Status", min_width=12)
+    table.add_column("# Models", justify="right", min_width=8)
+    table.add_column("Models", min_width=50 if verbose else 40)
+
+    for p in infos:
+        emoji = STATUS_EMOJI.get(p.status, "?")
+        color = STATUS_COLOR.get(p.status, "white")
+        if verbose:
+            preview = "\n".join(f"  {m.display} [{m.alias}]" for m in p.model_list)
+        else:
+            preview = ", ".join(m.display for m in p.model_list[:4])
+            if len(p.model_list) > 4:
+                preview += f" +{len(p.model_list) - 4}"
+        table.add_row(
+            p.name,
+            f"[{color}]{emoji} {p.status.value}[/{color}]",
+            str(len(p.model_list)),
+            preview,
+        )
+
+    console.print(table)
