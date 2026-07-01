@@ -417,3 +417,31 @@ def _cli_prompt(
 
     render_user_prompt(text)
     render_assistant_header(provider, model)
+
+    session = ChatSession(
+        provider=provider,
+        model=model,
+        api_keys=api_keys or {},
+        custom_providers=custom_providers or {},
+        proxy=proxy,
+        force_proxy=force_proxy,
+    )
+    session.push_user(text)
+
+    if stream:
+        collected = ""
+
+        async def _run() -> str:
+            nonlocal collected
+            async for chunk in session.ask_stream():
+                render_stream_chunk(chunk)
+                collected += chunk
+            return collected
+
+        asyncio.run(_run())
+        console.print()  
+        render_markdown(collected)
+    else:
+        with console.status("[dim]Thinking…[/dim]", spinner="dots"):
+            reply = asyncio.run(session.ask_once())
+        render_markdown(reply)
