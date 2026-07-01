@@ -101,3 +101,26 @@ async def test_registry_execute_known_tool() -> None:
     registry.register(Tool(name="double", description="doubles a number", handler=lambda n: n * 2))
     result = await registry.execute("double", {"n": 4})
     assert result == "8"
+    
+    
+# ChatSession.ask_with_tools
+
+@pytest.mark.asyncio
+async def test_ask_with_tools_no_tools_falls_back_to_ask_once() -> None:
+    mock_message = MagicMock()
+    mock_message.content = "plain answer"
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
+
+    with patch("gpt4free.chat.AsyncClient", return_value=mock_client), \
+         patch("gpt4free.chat.get_provider_class", return_value=MagicMock()):
+        s = ChatSession(provider="PollinationsAI", model="openai", auto_fallback=False)
+        s.push_user("hi")
+        result = await s.ask_with_tools()
+
+    assert result == "plain answer"
