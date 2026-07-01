@@ -296,3 +296,16 @@ def cmd_keys(
         save_config(cfg)
         console.print(f"[green]✓[/green] Key removed for [bold]{remove}[/bold]")
         return
+    known = {p.name for p in list_providers(cfg.custom_providers)}
+    known |= set(cfg.api_keys)
+    if not known:
+        console.print("No providers found.")
+        return
+    from rich.table import Table
+    tbl = Table()
+    tbl.add_column("Provider")
+    tbl.add_column("Key set")
+    for name in sorted(known):
+        has_key = "[green]yes[/green]" if cfg.get_api_key(name) else "[dim]no[/dim]"
+        tbl.add_row(name, has_key)
+    console.print(tbl)
