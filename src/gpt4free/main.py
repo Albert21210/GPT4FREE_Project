@@ -122,3 +122,52 @@ def cmd_providers(
         )
 
     console.print(table)
+
+@app.command("models")
+def cmd_models(
+    provider: Annotated[
+        str,
+        typer.Argument(help="Provider name, e.g. PollinationsAI, DeepInfra, Groq"),
+    ],
+) -> None:
+    """Fetch the LIVE model catalog for a provider straight from its API.
+
+    `providers`/`status` only show a small curated subset we verified by
+    hand. Most provider classes in g4f can report their full current model
+    list (sometimes 100+ entries, see g4f.dev/docs/providers-and-models) —
+    this command asks the provider directly instead of relying on our list.
+    Nothing validates -m/--model against the curated list, so any id printed
+    here can be used right away: gpt4free -P <provider> -m "<model id>"
+    """
+    import asyncio
+    from gpt4free.config import load_config
+    from gpt4free.providers import fetch_live_models, get_provider_info
+
+    cfg = load_config()
+    info = get_provider_info(provider, cfg.custom_providers)
+    if info is None:
+        console.print(f"[red]✗[/red] Unknown provider [bold]{provider}[/bold]. "
+                       f"Run `gpt4free providers` to see available names.")
+        raise typer.Exit(code=1)
+
+    api_key = cfg.get_api_key(provider)
+    with console.status(f"[dim]Asking {provider} for its live model list…[/dim]"):
+        models = asyncio.run(fetch_live_models(provider, api_key=api_key))
+
+    if not models:
+        console.print(
+            f"[yellow]![/yellow] {provider} didn't return a live model list "
+            f"(no get_models() support, or the request failed/timed out). "
+            f"Falling back to the curated list from `providers`:"
+        )
+        for m in info.model_list:
+            console.print(f"  {m.display} [dim][{m.alias}][/dim]")
+        return
+
+    console.print(f"[green]✓[/green] {provider} reports [bold]{len(models)}[/bold] live model(s):")
+    for m in models:
+        console.print(f"  {m.alias}")
+    console.print(
+        f"\n[dim]Use any of these right away: "
+        f"gpt4free -P {provider} -m \"<model id>\"[/dim]"
+    )
