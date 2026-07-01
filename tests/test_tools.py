@@ -86,3 +86,18 @@ def test_registry_to_openai_schema_multiple_tools() -> None:
     schema = registry.to_openai_schema()
     assert len(schema) == 2
     assert {s["function"]["name"] for s in schema} == {"a", "b"}
+    
+    
+@pytest.mark.asyncio
+async def test_registry_execute_unknown_tool() -> None:
+    registry = ToolRegistry()
+    result = await registry.execute("nope", {})
+    assert "error" in result
+
+
+@pytest.mark.asyncio
+async def test_registry_execute_known_tool() -> None:
+    registry = ToolRegistry()
+    registry.register(Tool(name="double", description="doubles a number", handler=lambda n: n * 2))
+    result = await registry.execute("double", {"n": 4})
+    assert result == "8"
