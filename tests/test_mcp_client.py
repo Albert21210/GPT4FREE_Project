@@ -19,3 +19,10 @@ from gpt4free.tools import ToolRegistry
 pytestmark = pytest.mark.skipif(not MCP_AVAILABLE, reason="'mcp' package not installed")
 
 FIXTURE_SERVER = str(Path(__file__).parent / "fixtures" / "dummy_mcp_server.py")
+
+
+@pytest.mark.asyncio
+async def test_connect_and_discover_tools() -> None:
+    async with connect_mcp_stdio(sys.executable, [FIXTURE_SERVER], server_name="dummy") as source:
+        names = {t.name for t in source.tools}
+        assert names == {"dummy.add", "dummy.greet"}
