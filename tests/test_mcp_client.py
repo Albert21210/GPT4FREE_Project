@@ -57,3 +57,14 @@ async def test_call_real_mcp_tool_greet() -> None:
         result = await registry.execute("dummy.greet", {"name": "Vitaly"})
 
     assert result == "Hello, Vitaly!"
+    
+    
+@pytest.mark.asyncio
+async def test_tool_schema_has_correct_parameters() -> None:
+    async with connect_mcp_stdio(sys.executable, [FIXTURE_SERVER], server_name="dummy") as source:
+        add_tool = next(t for t in source.tools if t.name == "dummy.add")
+        schema = add_tool.to_openai_schema()
+
+    assert schema["function"]["name"] == "dummy.add"
+    props = schema["function"]["parameters"]["properties"]
+    assert "a" in props and "b" in props
