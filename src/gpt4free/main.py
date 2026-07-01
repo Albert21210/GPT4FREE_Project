@@ -339,3 +339,9 @@ def cmd_custom_providers(
         typer.Option("--show", help="List configured custom providers"),
     ] = False,
 ) -> None:
+    """Manually register your own OpenAI-compatible provider and its models.
+
+    Example:
+      gpt4free custom-providers --add "MyServer=http://localhost:8000/v1" --models "llama3,mixtral"
+      gpt4free custom-providers --add "Together=https://api.together.xyz/v1" --models "meta-llama/Llama-3-70b" --api-key sk-...
+    """
