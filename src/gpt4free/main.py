@@ -348,3 +348,16 @@ def cmd_custom_providers(
     from gpt4free.config import load_config, save_config
 
     cfg = load_config()
+
+    if add:
+        if "=" not in add:
+            console.print('[red]✗[/red] Expected format: --add "Name=https://base.url/v1"')
+            raise typer.Exit(code=1)
+        name, _, base_url = add.partition("=")
+        name, base_url = name.strip(), base_url.strip()
+        if not base_url:
+            console.print("[red]✗[/red] base_url cannot be empty")
+            raise typer.Exit(code=1)
+        if not models:
+            console.print('[red]✗[/red] --models is required, e.g. --models "llama3,mixtral"')
+            raise typer.Exit(code=1)
