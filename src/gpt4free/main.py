@@ -386,3 +386,12 @@ def cmd_custom_providers(
     tbl.add_column("Base URL")
     tbl.add_column("Key set")
     tbl.add_column("Models")
+    for name, c in cfg.custom_providers.items():
+        model_names = ", ".join(m["alias"] for m in c.get("models", []))
+        tbl.add_row(
+            name,
+            c.get("base_url", ""),
+            "[green]yes[/green]" if c.get("api_key") else "[dim]no[/dim]",
+            model_names,
+        )
+    console.print(tbl)
