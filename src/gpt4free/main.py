@@ -199,3 +199,51 @@ def cmd_status(
     from gpt4free.render import render_provider_table
 
     render_provider_table(results)
+
+@app.command("config")
+def cmd_config(
+    show: Annotated[bool, typer.Option("--show", help="Print current config")] = False,
+    provider: Annotated[Optional[str], typer.Option("--provider", "-P")] = None,
+    model: Annotated[Optional[str], typer.Option("--model", "-m")] = None,
+    proxy: Annotated[
+        Optional[str],
+        typer.Option("--proxy", help="Set outbound proxy, e.g. socks5://127.0.0.1:1080"),
+    ] = None,
+    force_proxy: Annotated[
+        bool,
+        typer.Option("--force-proxy", help="Route ALL providers through the proxy, not just geoblocked ones"),
+    ] = False,
+    clear_proxy: Annotated[
+        bool,
+        typer.Option("--clear-proxy", help="Remove the configured proxy"),
+    ] = False,
+) -> None:
+    """View or update saved configuration."""
+    from gpt4free.config import load_config, save_config
+    import json
+
+    cfg = load_config()
+
+    if provider:
+        cfg.provider = provider
+        save_config(cfg)
+        console.print(f"[green]✓[/green] Provider set to [bold]{provider}[/bold]")
+
+    if model:
+        cfg.model = model
+        save_config(cfg)
+        console.print(f"[green]✓[/green] Model set to [bold]{model}[/bold]")
+
+    if clear_proxy:
+        cfg.clear_proxy()
+        save_config(cfg)
+        console.print("[green]✓[/green] Proxy cleared")
+
+    if proxy:
+        cfg.set_proxy(proxy, force=force_proxy)
+        save_config(cfg)
+        scope = "ALL providers" if force_proxy else "geoblocked providers only"
+        console.print(f"[green]✓[/green] Proxy set to [bold]{proxy}[/bold]  ·  scope: {scope}")
+
+    if show or (not provider and not model and not proxy and not clear_proxy):
+        console.print_json(json.dumps(cfg.to_dict(), indent=2))
