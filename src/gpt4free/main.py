@@ -266,3 +266,9 @@ def cmd_keys(
         typer.Option("--show", help="List configured providers and whether a key is set (keys themselves are masked)"),
     ] = False,
 ) -> None:
+    """Manage manual API keys for built-in providers (e.g. Cerebras, Gemini, Grok).
+
+    These unlock providers that otherwise come back auth_required in `status`.
+    Keys are stored locally in your config file, never sent anywhere except
+    directly to that provider's API.
+    """
