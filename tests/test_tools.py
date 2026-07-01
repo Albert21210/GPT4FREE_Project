@@ -124,3 +124,53 @@ async def test_ask_with_tools_no_tools_falls_back_to_ask_once() -> None:
         result = await s.ask_with_tools()
 
     assert result == "plain answer"
+    
+    
+@pytest.mark.asyncio
+async def test_ask_with_tools_executes_tool_then_returns_final_answer() -> None:
+    registry = ToolRegistry()
+
+    @registry.skill("get_weather", "weather lookup",
+                     {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]})
+    async def get_weather(city: str) -> str:
+        return f"Sunny in {city}"
+
+    # First model call: requests a tool call.
+    tool_call = MagicMock()
+    tool_call.id = "call_1"
+    tool_call.function.name = "get_weather"
+    tool_call.function.arguments = '{"city": "Helsinki"}'
+
+    first_message = MagicMock()
+    first_message.tool_calls = [tool_call]
+    first_message.content = None
+    first_choice = MagicMock()
+    first_choice.message = first_message
+    first_response = MagicMock()
+    first_response.choices = [first_choice]
+
+    # Second model call: returns the final text answer.
+    second_message = MagicMock()
+    second_message.tool_calls = None
+    second_message.content = "It's sunny in Helsinki."
+    second_choice = MagicMock()
+    second_choice.message = second_message
+    second_response = MagicMock()
+    second_response.choices = [second_choice]
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = AsyncMock(side_effect=[first_response, second_response])
+
+    with patch("gpt4free.chat.AsyncClient", return_value=mock_client), \
+         patch("gpt4free.chat.get_provider_class", return_value=MagicMock()):
+        s = ChatSession(provider="PollinationsAI", model="openai", tools=registry, auto_fallback=False)
+        s.push_user("What's the weather in Helsinki?")
+        result = await s.ask_with_tools()
+
+    assert result == "It's sunny in Helsinki."
+    # Conversation should now contain the tool-call + tool-result messages.
+    roles = [m.role for m in s.messages]
+    assert "tool" in roles
+    tool_msg = next(m for m in s.messages if m.role == "tool")
+    assert tool_msg.content == "Sunny in Helsinki"
+    assert mock_client.chat.completions.create.await_count == 2
