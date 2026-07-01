@@ -30,3 +30,29 @@ class TestKeysCommand:
     def test_set_rejects_empty_key(self, isolated_config) -> None:
         result = runner.invoke(app, ["keys", "--set", "Cerebras="])
         assert result.exit_code != 0
+
+    def test_set_and_show_key(self, isolated_config) -> None:
+        set_result = runner.invoke(app, ["keys", "--set", "Cerebras=sk-test123"])
+        assert set_result.exit_code == 0
+        assert "Cerebras" in set_result.stdout
+
+        show_result = runner.invoke(app, ["keys", "--show"])
+        assert show_result.exit_code == 0
+        assert "Cerebras" in show_result.stdout
+        assert "sk-test123" not in show_result.stdout
+
+    def test_remove_key(self, isolated_config) -> None:
+        runner.invoke(app, ["keys", "--set", "Cerebras=sk-test123"])
+        remove_result = runner.invoke(app, ["keys", "--remove", "Cerebras"])
+        assert remove_result.exit_code == 0
+
+        from gpt4free.config import load_config
+        cfg = load_config()
+        assert cfg.get_api_key("Cerebras") is None
+
+    def test_key_persists_across_loads(self, isolated_config) -> None:
+        runner.invoke(app, ["keys", "--set", "Gemini=sk-abc"])
+
+        from gpt4free.config import load_config
+        cfg = load_config()
+        assert cfg.get_api_key("Gemini") == "sk-abc"
