@@ -258,3 +258,38 @@ class GPT4FREETUI(App[None]):
             f"  ·  model: [bold]{self._session.model}[/bold]"
         )
         log.sys("Type [bold]/help[/bold] to see available commands.")
+
+    # ── Input ─────────────────────────────────────────────────────────────────
+
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
+        text = event.value.strip()
+        if not text or self._busy:
+            return
+        event.input.value = ""
+        self._hist_idx = -1
+
+        if text.startswith("/"):
+            await self._handle_command(text)
+        else:
+            self._do_chat(text)
+
+    def on_key(self, event: object) -> None:
+        from textual.events import Key
+
+        if not isinstance(event, Key):
+            return
+        inp = self.query_one("#prompt", Input)
+
+        if event.key == "up":
+            if self._history:
+                self._hist_idx = min(self._hist_idx + 1, len(self._history) - 1)
+                inp.value = self._history[-(self._hist_idx + 1)]
+                inp.cursor_position = len(inp.value)
+        elif event.key == "down":
+            if self._hist_idx > 0:
+                self._hist_idx -= 1
+                inp.value = self._history[-(self._hist_idx + 1)]
+                inp.cursor_position = len(inp.value)
+            elif self._hist_idx == 0:
+                self._hist_idx = -1
+                inp.value = ""
