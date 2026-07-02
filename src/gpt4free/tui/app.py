@@ -218,3 +218,32 @@ class GPT4FREETUI(App[None]):
         self._busy = False
         self._history: list[str] = list(cfg.prompt_history)
         self._hist_idx: int = -1
+
+    # ── Composition ───────────────────────────────────────────────────────────
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="banner-wrap"):
+            yield Static(BANNER, id="banner")
+            yield Static(
+                "Free GPT-4 access · No API key · /help for commands",
+                id="banner-sub",
+            )
+
+        scroll = ScrollableContainer(ChatLog(id="chat-log"), id="chat-scroll")
+        scroll.border_title = " conversation "
+        yield scroll
+
+        with Vertical(id="input-area"):
+            with Horizontal(id="input-row"):
+                yield Label("›", id="caret")
+                yield Input(
+                    placeholder="Ask anything…  (/help for commands)",
+                    id="prompt",
+                )
+
+        with Horizontal(id="status-bar"):
+            yield Static(self._sb_left(), id="sb-left")
+            yield Static("GPT4FREE TUI", id="sb-mid")
+            yield Static("ctrl+p/m/s", id="sb-right")
+
+        yield Footer()
