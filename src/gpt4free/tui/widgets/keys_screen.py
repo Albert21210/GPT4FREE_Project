@@ -193,3 +193,9 @@ class CustomProviderScreen(ModalScreen[Optional[dict]]):
 
     def on_mount(self) -> None:
         self.query_one("#name-input", Input).focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "save-btn":
+            self.action_save()
+        elif event.button.id == "cancel-btn":
+            self.action_cancel()
