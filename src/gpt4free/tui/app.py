@@ -332,3 +332,34 @@ class GPT4FREETUI(App[None]):
 
         else:
             log.error(f"Unknown command: {cmd}  — type /help for list")
+
+    # ── Chat worker ───────────────────────────────────────────────────────────
+
+    @work(exclusive=True)
+    async def _do_chat(self, text: str) -> None:
+        log = self.query_one(ChatLog)
+        log.user(text)
+        self._session.push_user(text)
+
+        self._history.append(text)
+        self._cfg.add_to_history(text)
+        self._cfg.provider = self._session.provider
+        self._cfg.model = self._session.model
+        save_config(self._cfg)
+
+        self._busy = True
+        self._refresh_status()
+
+        bot_widget = log.bot_placeholder()
+        collected = ""
+
+        try:
+            async for chunk in self._session.ask_stream():
+                collected += chunk
+                log.update_bot(bot_widget, collected)
+        except Exception as exc:  # noqa: BLE001
+            log.error(str(exc))
+        finally:
+            self._session.push_assistant(collected)
+            self._busy = False
+            self._refresh_status()
