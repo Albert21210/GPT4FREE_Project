@@ -396,6 +396,151 @@ def cmd_custom_providers(
         )
     console.print(tbl)
 
+@app.command("mcp")
+def cmd_mcp(
+    add: Annotated[
+        Optional[str],
+        typer.Option(
+            "--add",
+            help='Add as "Name=command arg1 arg2", e.g. --add "files=npx -y @modelcontextprotocol/server-filesystem /home/me"',
+        ),
+    ] = None,
+    remove: Annotated[
+        Optional[str],
+        typer.Option("--remove", help="Remove an MCP server by name"),
+    ] = None,
+    enable: Annotated[
+        Optional[str],
+        typer.Option("--enable", help="Enable a previously-added MCP server"),
+    ] = None,
+    disable: Annotated[
+        Optional[str],
+        typer.Option("--disable", help="Disable an MCP server without removing it"),
+    ] = None,
+    show: Annotated[
+        bool,
+        typer.Option("--show", help="List configured MCP servers"),
+    ] = False,
+) -> None:
+    """Manage local MCP (Model Context Protocol) servers.
+
+    Each server is launched as a subprocess over stdio and its tools become
+    available to the model automatically in both the TUI and `-p` prompts.
+
+    Example:
+      gpt4free mcp --add "files=npx -y @modelcontextprotocol/server-filesystem /home/me/projects"
+      gpt4free mcp --disable files
+      gpt4free mcp --show
+    """
+    import shlex
+
+    from gpt4free.config import load_config, save_config
+    from gpt4free.mcp_client import MCP_AVAILABLE
+
+    cfg = load_config()
+
+    if add:
+        if "=" not in add:
+            console.print('[red]✗[/red] Expected format: --add "Name=command arg1 arg2"')
+            raise typer.Exit(code=1)
+        name, _, command_line = add.partition("=")
+        name, command_line = name.strip(), command_line.strip()
+        parts = shlex.split(command_line)
+        if not parts:
+            console.print("[red]✗[/red] Command cannot be empty")
+            raise typer.Exit(code=1)
+        cfg.add_mcp_server(name, command=parts[0], args=parts[1:])
+        save_config(cfg)
+        console.print(f"[green]✓[/green] MCP server [bold]{name}[/bold] added → {command_line}")
+        if not MCP_AVAILABLE:
+            console.print("[yellow]![/yellow] The 'mcp' package isn't installed yet: pip install mcp")
+        return
+
+    if remove:
+        cfg.remove_mcp_server(remove)
+        save_config(cfg)
+        console.print(f"[green]✓[/green] MCP server [bold]{remove}[/bold] removed")
+        return
+
+    if enable:
+        cfg.set_mcp_server_enabled(enable, True)
+        save_config(cfg)
+        console.print(f"[green]✓[/green] MCP server [bold]{enable}[/bold] enabled")
+        return
+
+    if disable:
+        cfg.set_mcp_server_enabled(disable, False)
+        save_config(cfg)
+        console.print(f"[green]✓[/green] MCP server [bold]{disable}[/bold] disabled")
+        return
+
+    if not cfg.mcp_servers:
+        console.print("No MCP servers configured. Use --add to register one.")
+        return
+    from rich.table import Table
+    tbl = Table()
+    tbl.add_column("Name")
+    tbl.add_column("Command")
+    tbl.add_column("Enabled")
+    for name, s in cfg.mcp_servers.items():
+        cmd = " ".join([s.get("command", "")] + s.get("args", []))
+        tbl.add_row(name, cmd, "[green]yes[/green]" if s.get("enabled", True) else "[dim]no[/dim]")
+    console.print(tbl)
+    if not MCP_AVAILABLE:
+        console.print("\n[yellow]![/yellow] The 'mcp' package isn't installed: pip install mcp")
+
+@app.command("tools")
+def cmd_tools(
+    test: Annotated[
+        bool,
+        typer.Option("--test", help="Actually connect to every enabled MCP server and list its live tools"),
+    ] = False,
+) -> None:
+    """Show which tools the model can call: built-in skills + configured MCP servers."""
+    from gpt4free.config import load_config
+    from gpt4free.skills import build_default_registry
+
+    cfg = load_config()
+
+    console.print("[bold #6c63ff]Built-in tools[/bold #6c63ff] "
+                  f"({'enabled' if cfg.builtin_tools_enabled else '[dim]disabled[/dim]'})")
+    if cfg.builtin_tools_enabled:
+        for t in build_default_registry().list_tools():
+            console.print(f"  • [bold]{t.name}[/bold] — {t.description}")
+
+    if not cfg.mcp_servers:
+        console.print("\n[dim]No MCP servers configured. Use `gpt4free mcp --add ...`.[/dim]")
+        return
+
+    console.print("\n[bold #6c63ff]MCP servers[/bold #6c63ff]")
+    if not test:
+        for name, s in cfg.mcp_servers.items():
+            status = "[green]enabled[/green]" if s.get("enabled", True) else "[dim]disabled[/dim]"
+            console.print(f"  • [bold]{name}[/bold] ({status}) — run with [dim]--test[/dim] to list its live tools")
+        return
+
+    import asyncio as _asyncio
+    from contextlib import AsyncExitStack
+
+    from gpt4free.tools_setup import build_tool_registry
+
+    async def _probe() -> None:
+        async with AsyncExitStack() as stack:
+
+            def _on_error(name: str, msg: str) -> None:
+                console.print(f"  • [bold]{name}[/bold] — [red]failed:[/red] {msg}")
+
+            registry = await build_tool_registry(cfg, stack, on_error=_on_error)
+            builtin_names = {t.name for t in build_default_registry().list_tools()} if cfg.builtin_tools_enabled else set()
+            mcp_tools = [t for t in registry.list_tools() if t.name not in builtin_names]
+            if not mcp_tools:
+                console.print("  [dim](no tools discovered)[/dim]")
+            for t in mcp_tools:
+                console.print(f"  • [bold]{t.name}[/bold] — {t.description}")
+
+    with console.status("[dim]Connecting to MCP servers…[/dim]", spinner="dots"):
+        _asyncio.run(_probe())
+
 def _cli_prompt(
     text: str,
     provider: str,
@@ -407,13 +552,17 @@ def _cli_prompt(
     force_proxy: bool = False,
 ) -> None:
     """Run a single prompt in the terminal with streaming output."""
+    from contextlib import AsyncExitStack
+
     from gpt4free.chat import ChatSession
+    from gpt4free.config import load_config
     from gpt4free.render import (
         render_assistant_header,
         render_markdown,
         render_stream_chunk,
         render_user_prompt,
     )
+    from gpt4free.tools_setup import build_tool_registry
 
     render_user_prompt(text)
     render_assistant_header(provider, model)
@@ -428,20 +577,32 @@ def _cli_prompt(
     )
     session.push_user(text)
 
-    if stream:
-        collected = ""
+    cfg = load_config()
 
-        async def _run() -> str:
-            nonlocal collected
-            async for chunk in session.ask_stream():
-                render_stream_chunk(chunk)
-                collected += chunk
-            return collected
+    async def _run() -> str:
+        async with AsyncExitStack() as stack:
 
-        asyncio.run(_run())
-        console.print()  
-        render_markdown(collected)
-    else:
-        with console.status("[dim]Thinking…[/dim]", spinner="dots"):
-            reply = asyncio.run(session.ask_once())
-        render_markdown(reply)
+            def _on_error(name: str, msg: str) -> None:
+                console.print(f"[yellow]![/yellow] MCP server [bold]{name}[/bold] unavailable: {msg}")
+
+            session.tools = await build_tool_registry(cfg, stack, on_error=_on_error)
+
+            if len(session.tools) > 0:
+                # Function-calling requires the full round-trip (model → tool
+                # → model), so this path is never streamed token-by-token.
+                with console.status("[dim]Thinking (tools enabled)…[/dim]", spinner="dots"):
+                    return await session.ask_with_tools()
+
+            if stream:
+                collected = ""
+                async for chunk in session.ask_stream():
+                    render_stream_chunk(chunk)
+                    collected += chunk
+                console.print()
+                return collected
+
+            with console.status("[dim]Thinking…[/dim]", spinner="dots"):
+                return await session.ask_once()
+
+    reply = asyncio.run(_run())
+    render_markdown(reply)
