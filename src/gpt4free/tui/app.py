@@ -108,3 +108,38 @@ class GPT4FREETUI(App[None]):
     ChatLog {
         padding: 1 2;
     }
+
+    /* ── Message styles ──────────────────────────────────────── */
+    .msg-user {
+        color: #e0e0ff;
+        border-left: solid #6c63ff;
+        background: #12152a;
+        padding: 0 1;
+        margin-bottom: 1;
+    }
+    .msg-bot {
+        color: #c8ffc8;
+        border-left: solid #00cc66;
+        background: #0a140a;
+        padding: 0 1;
+        margin-bottom: 1;
+    }
+    .msg-sys {
+        color: #3d3f5c;
+        text-style: italic;
+        margin-bottom: 1;
+    }
+    .msg-error {
+        color: #ff6666;
+        border-left: solid #cc2222;
+        background: #1a0a0a;
+        padding: 0 1;
+        margin-bottom: 1;
+    }
+    .msg-help {
+        color: #9f99ff;
+        border-left: solid #4a44cc;
+        background: #0d0f20;
+        padding: 0 1;
+        margin-bottom: 1;
+    }
