@@ -202,3 +202,28 @@ class CustomProviderScreen(ModalScreen[Optional[dict]]):
 
     def action_cancel(self) -> None:
         self.dismiss(None)
+
+    def action_save(self) -> None:
+        name = self.query_one("#name-input", Input).value.strip()
+        base_url = self.query_one("#url-input", Input).value.strip()
+        api_key = self.query_one("#key-input", Input).value.strip()
+        models_raw = self.query_one("#models-input", Input).value.strip()
+
+        error = self.query_one("#error-label", Static)
+        if not name:
+            error.update("[bold red]Name is required[/bold red]")
+            return
+        if not base_url:
+            error.update("[bold red]Base URL is required[/bold red]")
+            return
+        models = [m.strip() for m in models_raw.split(",") if m.strip()]
+        if not models:
+            error.update("[bold red]At least one model is required[/bold red]")
+            return
+
+        self.dismiss({
+            "name": name,
+            "base_url": base_url,
+            "api_key": api_key,
+            "models": [{"alias": m, "display": m} for m in models],
+        })
