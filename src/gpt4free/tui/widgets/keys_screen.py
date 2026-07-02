@@ -190,3 +190,6 @@ class CustomProviderScreen(ModalScreen[Optional[dict]]):
             with Horizontal(classes="cust-buttons"):
                 yield Button("Cancel", id="cancel-btn", variant="default")
                 yield Button("Add", id="save-btn", variant="primary")
+
+    def on_mount(self) -> None:
+        self.query_one("#name-input", Input).focus()
