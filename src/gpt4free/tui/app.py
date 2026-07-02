@@ -363,3 +363,142 @@ class GPT4FREETUI(App[None]):
             self._session.push_assistant(collected)
             self._busy = False
             self._refresh_status()
+
+    # ── Actions ───────────────────────────────────────────────────────────────
+
+    async def action_pick_provider(self) -> None:
+        infos = list_providers(self._cfg.custom_providers)
+
+        def _on_pick(name: Optional[str]) -> None:
+            if not name:
+                return
+            self._session.provider = name
+            for p in infos:
+                if p.name == name and p.model_list:
+                    self._session.model = p.model_list[0].alias
+                    break
+            self._refresh_status()
+            log = self.query_one(ChatLog)
+            log.sys(
+                f"✅  Provider → [bold]{self._session.provider}[/bold]"
+                f"  ·  model → [bold]{self._session.model}[/bold]"
+            )
+            self._cfg.provider = self._session.provider
+            self._cfg.model = self._session.model
+            save_config(self._cfg)
+
+        await self.push_screen(ProviderPickerScreen(infos), _on_pick)
+
+    async def action_pick_model(self) -> None:
+        infos = list_providers(self._cfg.custom_providers)
+        model_list = []
+        for p in infos:
+            if p.name == self._session.provider:
+                model_list = p.model_list
+                break
+
+        if not model_list:
+            self.query_one(ChatLog).error("No models found for current provider.")
+            return
+
+        def _on_pick(alias: Optional[str]) -> None:
+            if not alias:
+                return
+            self._session.model = alias
+            self._refresh_status()
+            self.query_one(ChatLog).sys(f"✅  Model → [bold]{alias}[/bold]")
+            self._cfg.model = alias
+            save_config(self._cfg)
+
+        await self.push_screen(ModelPickerScreen(model_list), _on_pick)
+
+    async def action_set_proxy(self) -> None:
+        def _on_save(result: Optional[tuple[Optional[str], bool]]) -> None:
+            if result is None:
+                return  # cancelled
+
+            proxy_url, force = result
+            log = self.query_one(ChatLog)
+
+            if proxy_url:
+                self._cfg.set_proxy(proxy_url, force=force)
+                self._session.proxy = proxy_url
+                self._session.force_proxy = force
+                scope = "ALL providers" if force else "geoblocked providers only"
+                log.sys(f"✅  Proxy set → [bold]{proxy_url}[/bold]  ·  scope: {scope}")
+            else:
+                self._cfg.clear_proxy()
+                self._session.proxy = None
+                self._session.force_proxy = False
+                log.sys("✅  Proxy cleared")
+
+            save_config(self._cfg)
+            self._refresh_status()
+
+        await self.push_screen(
+            ProxyScreen(current_proxy=self._cfg.proxy, current_force=self._cfg.force_proxy),
+            _on_save,
+        )
+
+    async def action_manage_keys(self) -> None:
+        infos = list_providers(self._cfg.custom_providers)
+        # Only built-in providers make sense here — custom providers already
+        # carry their own key from when they were added.
+        builtin = [p for p in infos if not p.is_custom]
+
+        def _on_save(result: Optional[tuple[str, str]]) -> None:
+            if result is None:
+                return  # cancelled
+            provider, key = result
+            log = self.query_one(ChatLog)
+            self._cfg.set_api_key(provider, key)
+            self._session.api_keys = dict(self._cfg.api_keys)
+            save_config(self._cfg)
+            if key:
+                log.sys(f"✅  API key saved for [bold]{provider}[/bold]")
+            else:
+                log.sys(f"✅  API key removed for [bold]{provider}[/bold]")
+            self._refresh_status()
+
+        await self.push_screen(KeysScreen(builtin, dict(self._cfg.api_keys)), _on_save)
+
+    async def action_add_custom(self) -> None:
+        def _on_save(result: Optional[dict]) -> None:
+            if result is None:
+                return  # cancelled
+            log = self.query_one(ChatLog)
+            self._cfg.add_custom_provider(
+                result["name"],
+                result["base_url"],
+                result["models"],
+                api_key=result["api_key"],
+            )
+            self._session.custom_providers = dict(self._cfg.custom_providers)
+            save_config(self._cfg)
+            log.sys(
+                f"✅  Custom provider [bold]{result['name']}[/bold] added "
+                f"({len(result['models'])} model(s)) → {result['base_url']}\n"
+                f"    Switch to it with /provider."
+            )
+            self._refresh_status()
+
+        await self.push_screen(CustomProviderScreen(), _on_save)
+
+    async def action_show_status(self) -> None:
+        await self.push_screen(StatusScreen(cfg=self._cfg))
+
+    def action_clear_chat(self) -> None:
+        self._session.clear()
+        log = self.query_one(ChatLog)
+        log.remove_children()
+        log.sys("🗑  Conversation cleared.")
+
+    def action_new_session(self) -> None:
+        self._session.clear()
+        log = self.query_one(ChatLog)
+        log.remove_children()
+        log.sys("✨  New session started.")
+
+    def action_quit(self) -> None:
+        save_config(self._cfg)
+        self.exit()
