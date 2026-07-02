@@ -9,6 +9,7 @@ from textual.containers import Vertical
 from textual.screen import ModalScreen
 from textual.widgets import DataTable, Label
 
+from gpt4free.config import AppConfig
 from gpt4free.providers import (
     ProviderInfo,
     ProviderStatus,
