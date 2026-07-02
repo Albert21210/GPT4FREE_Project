@@ -5,7 +5,6 @@ Keybindings:
   /help         — show commands
   /provider     — pick provider
   /model        — pick model
-  /proxy        — configure outbound proxy
   /status       — probe & show provider status
   /clear        — clear conversation
   /new          — new session
@@ -21,7 +20,7 @@ from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, ScrollableContainer
-from textual.widgets import Footer, Input, Label, Static
+from textual.widgets import Button, Footer, Input, Label, Static
 
 from gpt4free.chat import ChatSession
 from gpt4free.config import AppConfig, load_config, save_config
@@ -32,11 +31,8 @@ from gpt4free.providers import (
 )
 from gpt4free.tui.widgets import (
     ChatLog,
-    CustomProviderScreen,
-    KeysScreen,
     ModelPickerScreen,
     ProviderPickerScreen,
-    ProxyScreen,
     StatusScreen,
 )
 
@@ -47,9 +43,6 @@ HELP_TEXT = """\
   [bold]/help[/bold]      — show this help
   [bold]/provider[/bold]  — change provider
   [bold]/model[/bold]     — change model
-  [bold]/proxy[/bold]     — configure outbound proxy
-  [bold]/keys[/bold]      — attach an API key to a built-in provider
-  [bold]/custom[/bold]    — add your own OpenAI-compatible provider
   [bold]/status[/bold]    — probe & show provider status table
   [bold]/clear[/bold]     — clear conversation history
   [bold]/new[/bold]       — start a fresh session
@@ -184,6 +177,22 @@ class GPT4FREETUI(App[None]):
     #sb-mid   { width: auto; color: #3d3f5c; content-align: center middle; }
     #sb-right { width: auto; color: #3d3f5c; }
 
+    #btn-provider, #btn-model {
+        width: auto;
+        min-width: 3;
+        height: 1;
+        margin: 0 0 0 1;
+        background: #1a1d2e;
+        color: #6c63ff;
+        border: none;
+        content-align: center middle;
+    }
+
+    #btn-provider:hover, #btn-model:hover {
+        background: #6c63ff;
+        color: white;
+    }
+
     Footer {
         background: #0d0f17;
         color: #3d3f5c;
@@ -195,9 +204,6 @@ class GPT4FREETUI(App[None]):
     BINDINGS = [
         Binding("ctrl+p", "pick_provider", "Provider"),
         Binding("ctrl+m", "pick_model",    "Model"),
-        Binding("ctrl+x", "set_proxy",     "Proxy"),
-        Binding("ctrl+k", "manage_keys",   "Keys"),
-        Binding("ctrl+a", "add_custom",    "Add API"),
         Binding("ctrl+s", "show_status",   "Status"),
         Binding("ctrl+l", "clear_chat",    "Clear"),
         Binding("ctrl+n", "new_session",   "New"),
@@ -207,14 +213,7 @@ class GPT4FREETUI(App[None]):
     def __init__(self, cfg: AppConfig) -> None:
         super().__init__()
         self._cfg = cfg
-        self._session = ChatSession(
-            provider=cfg.provider,
-            model=cfg.model,
-            api_keys=dict(cfg.api_keys),
-            custom_providers=dict(cfg.custom_providers),
-            proxy=cfg.proxy,
-            force_proxy=cfg.force_proxy,
-        )
+        self._session = ChatSession(provider=cfg.provider, model=cfg.model)
         self._busy = False
         self._history: list[str] = list(cfg.prompt_history)
         self._hist_idx: int = -1
@@ -243,7 +242,8 @@ class GPT4FREETUI(App[None]):
 
         with Horizontal(id="status-bar"):
             yield Static(self._sb_left(), id="sb-left")
-            yield Static("GPT4FREE TUI", id="sb-mid")
+            yield Button("Provider", id="btn-provider")
+            yield Static("   GPT4FREE TUI   ", id="sb-mid")
             yield Static("ctrl+p/m/s", id="sb-right")
 
         yield Footer()
@@ -272,6 +272,10 @@ class GPT4FREETUI(App[None]):
             await self._handle_command(text)
         else:
             self._do_chat(text)
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn-provider":
+            await self.action_pick_provider()
 
     def on_key(self, event: object) -> None:
         from textual.events import Key
@@ -308,15 +312,6 @@ class GPT4FREETUI(App[None]):
 
         elif base == "/model":
             await self.action_pick_model()
-
-        elif base == "/proxy":
-            await self.action_set_proxy()
-
-        elif base in ("/keys", "/key"):
-            await self.action_manage_keys()
-
-        elif base in ("/custom", "/customprovider"):
-            await self.action_add_custom()
 
         elif base == "/status":
             await self.action_show_status()
@@ -367,7 +362,7 @@ class GPT4FREETUI(App[None]):
     # ── Actions ───────────────────────────────────────────────────────────────
 
     async def action_pick_provider(self) -> None:
-        infos = list_providers(self._cfg.custom_providers)
+        infos = list_providers()
 
         def _on_pick(name: Optional[str]) -> None:
             if not name:
@@ -390,7 +385,7 @@ class GPT4FREETUI(App[None]):
         await self.push_screen(ProviderPickerScreen(infos), _on_pick)
 
     async def action_pick_model(self) -> None:
-        infos = list_providers(self._cfg.custom_providers)
+        infos = list_providers()
         model_list = []
         for p in infos:
             if p.name == self._session.provider:
@@ -412,80 +407,8 @@ class GPT4FREETUI(App[None]):
 
         await self.push_screen(ModelPickerScreen(model_list), _on_pick)
 
-    async def action_set_proxy(self) -> None:
-        def _on_save(result: Optional[tuple[Optional[str], bool]]) -> None:
-            if result is None:
-                return  # cancelled
-
-            proxy_url, force = result
-            log = self.query_one(ChatLog)
-
-            if proxy_url:
-                self._cfg.set_proxy(proxy_url, force=force)
-                self._session.proxy = proxy_url
-                self._session.force_proxy = force
-                scope = "ALL providers" if force else "geoblocked providers only"
-                log.sys(f"✅  Proxy set → [bold]{proxy_url}[/bold]  ·  scope: {scope}")
-            else:
-                self._cfg.clear_proxy()
-                self._session.proxy = None
-                self._session.force_proxy = False
-                log.sys("✅  Proxy cleared")
-
-            save_config(self._cfg)
-            self._refresh_status()
-
-        await self.push_screen(
-            ProxyScreen(current_proxy=self._cfg.proxy, current_force=self._cfg.force_proxy),
-            _on_save,
-        )
-
-    async def action_manage_keys(self) -> None:
-        infos = list_providers(self._cfg.custom_providers)
-        # Only built-in providers make sense here — custom providers already
-        # carry their own key from when they were added.
-        builtin = [p for p in infos if not p.is_custom]
-
-        def _on_save(result: Optional[tuple[str, str]]) -> None:
-            if result is None:
-                return  # cancelled
-            provider, key = result
-            log = self.query_one(ChatLog)
-            self._cfg.set_api_key(provider, key)
-            self._session.api_keys = dict(self._cfg.api_keys)
-            save_config(self._cfg)
-            if key:
-                log.sys(f"✅  API key saved for [bold]{provider}[/bold]")
-            else:
-                log.sys(f"✅  API key removed for [bold]{provider}[/bold]")
-            self._refresh_status()
-
-        await self.push_screen(KeysScreen(builtin, dict(self._cfg.api_keys)), _on_save)
-
-    async def action_add_custom(self) -> None:
-        def _on_save(result: Optional[dict]) -> None:
-            if result is None:
-                return  # cancelled
-            log = self.query_one(ChatLog)
-            self._cfg.add_custom_provider(
-                result["name"],
-                result["base_url"],
-                result["models"],
-                api_key=result["api_key"],
-            )
-            self._session.custom_providers = dict(self._cfg.custom_providers)
-            save_config(self._cfg)
-            log.sys(
-                f"✅  Custom provider [bold]{result['name']}[/bold] added "
-                f"({len(result['models'])} model(s)) → {result['base_url']}\n"
-                f"    Switch to it with /provider."
-            )
-            self._refresh_status()
-
-        await self.push_screen(CustomProviderScreen(), _on_save)
-
     async def action_show_status(self) -> None:
-        await self.push_screen(StatusScreen(cfg=self._cfg))
+        await self.push_screen(StatusScreen())
 
     def action_clear_chat(self) -> None:
         self._session.clear()
@@ -508,10 +431,7 @@ class GPT4FREETUI(App[None]):
     def _sb_left(self) -> str:
         icon = "⟳" if self._busy else "●"
         state = " generating…" if self._busy else " ready"
-        proxy_tag = ""
-        if self._session.proxy:
-            proxy_tag = "  🌐 proxy:ALL" if self._session.force_proxy else "  🌐 proxy"
-        return f" {icon} {self._session.provider} / {self._session.model}{state}{proxy_tag}"
+        return f" {icon} {self._session.provider} / {self._session.model}{state}"
 
     def _refresh_status(self) -> None:
         self.query_one("#sb-left", Static).update(self._sb_left())
