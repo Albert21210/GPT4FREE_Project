@@ -72,7 +72,7 @@ class StatusScreen(ModalScreen[None]):
                 classes="ov-title",
             )
             tbl: DataTable[str] = DataTable(id="tbl")
-            tbl.add_columns("Provider", "Status", "Latency", "Models")
+            tbl.add_columns("Provider", "Status", "Latency", "Detail", "Models")
             yield tbl
 
     def on_mount(self) -> None:
