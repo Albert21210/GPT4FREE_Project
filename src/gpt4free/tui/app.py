@@ -14,6 +14,7 @@ Keybindings:
 from __future__ import annotations
 
 import asyncio
+from contextlib import AsyncExitStack
 from typing import Optional
 
 from textual import work
@@ -29,6 +30,7 @@ from gpt4free.providers import (
     list_providers,
     probe_all,
 )
+from gpt4free.tools_setup import build_tool_registry
 from gpt4free.tui.widgets import (
     ChatLog,
     ModelPickerScreen,
@@ -44,6 +46,7 @@ HELP_TEXT = """\
   [bold]/provider[/bold]  — change provider
   [bold]/model[/bold]     — change model
   [bold]/status[/bold]    — probe & show provider status table
+  [bold]/tools[/bold]     — list active tools (built-in + MCP servers)
   [bold]/clear[/bold]     — clear conversation history
   [bold]/new[/bold]       — start a fresh session
   [bold]/exit[/bold]      — quit
@@ -217,6 +220,8 @@ class GPT4FREETUI(App[None]):
         self._busy = False
         self._history: list[str] = list(cfg.prompt_history)
         self._hist_idx: int = -1
+        self._tool_stack = AsyncExitStack()
+        self._tools_ready = False
 
     # ── Composition ───────────────────────────────────────────────────────────
 
@@ -258,6 +263,24 @@ class GPT4FREETUI(App[None]):
             f"  ·  model: [bold]{self._session.model}[/bold]"
         )
         log.sys("Type [bold]/help[/bold] to see available commands.")
+        if self._cfg.builtin_tools_enabled or self._cfg.mcp_servers:
+            self._connect_tools()
+
+    async def on_unmount(self) -> None:
+        await self._tool_stack.aclose()
+
+    @work(exclusive=False)
+    async def _connect_tools(self) -> None:
+        log = self.query_one(ChatLog)
+
+        def _on_error(name: str, msg: str) -> None:
+            log.error(f"MCP server '{name}' unavailable: {msg}")
+
+        self._session.tools = await build_tool_registry(self._cfg, self._tool_stack, on_error=_on_error)
+        self._tools_ready = True
+        n = len(self._session.tools)
+        if n:
+            log.sys(f"🔧  {n} tool(s) ready. Type [bold]/tools[/bold] to see them.")
 
     # ── Input ─────────────────────────────────────────────────────────────────
 
@@ -316,6 +339,9 @@ class GPT4FREETUI(App[None]):
         elif base == "/status":
             await self.action_show_status()
 
+        elif base == "/tools":
+            self._show_tools()
+
         elif base in ("/clear", "/c"):
             self.action_clear_chat()
 
@@ -349,13 +375,25 @@ class GPT4FREETUI(App[None]):
         collected = ""
 
         try:
-            async for chunk in self._session.ask_stream():
-                collected += chunk
+            if self._session.tools and len(self._session.tools) > 0:
+                # Function-calling needs the full model → tool → model
+                # round-trip, so this path isn't streamed token-by-token.
+                log.update_bot(bot_widget, "[dim]…using tools…[/dim]")
+                collected = await self._session.ask_with_tools()
                 log.update_bot(bot_widget, collected)
+            else:
+                async for chunk in self._session.ask_stream():
+                    collected += chunk
+                    log.update_bot(bot_widget, collected)
         except Exception as exc:  # noqa: BLE001
             log.error(str(exc))
         finally:
-            self._session.push_assistant(collected)
+            if self._session.tools and len(self._session.tools) > 0:
+                # ask_with_tools() already appended the final assistant
+                # message to session.messages; avoid pushing it twice.
+                pass
+            else:
+                self._session.push_assistant(collected)
             self._busy = False
             self._refresh_status()
 
@@ -425,6 +463,18 @@ class GPT4FREETUI(App[None]):
     def action_quit(self) -> None:
         save_config(self._cfg)
         self.exit()
+
+    def _show_tools(self) -> None:
+        log = self.query_one(ChatLog)
+        if not self._tools_ready:
+            log.sys("🔧  Tools are still connecting… try again in a moment.")
+            return
+        tools = self._session.tools.list_tools() if self._session.tools else []
+        if not tools:
+            log.sys("🔧  No tools available. Configure MCP servers with `gpt4free mcp --add ...`.")
+            return
+        lines = "\n".join(f"  • [bold]{t.name}[/bold] — {t.description}" for t in tools)
+        log.add_widget(Static(f"[bold #6c63ff]Active tools ({len(tools)})[/bold #6c63ff]\n{lines}", classes="msg-help"))
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 
