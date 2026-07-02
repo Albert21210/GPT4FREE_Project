@@ -21,3 +21,52 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Input, Label, ListItem, ListView, Static
 
 from gpt4free.providers import ProviderInfo
+
+
+_CSS = """
+KeysScreen, CustomProviderScreen {
+    align: center middle;
+    background: #00000099;
+}
+.keys-box, .cust-box {
+    width: 76;
+    height: auto;
+    max-height: 90%;
+    border: round #6c63ff;
+    background: #0d0f17;
+    padding: 1 2;
+}
+.keys-title, .cust-title {
+    color: #6c63ff;
+    text-style: bold;
+    border-bottom: solid #1a1d2e;
+    padding-bottom: 1;
+    margin-bottom: 1;
+}
+.keys-hint, .cust-hint {
+    color: #6f7390;
+    margin-bottom: 1;
+}
+.keys-input, .cust-input {
+    background: #12152a;
+    border: solid #252850;
+    color: #e0e0ff;
+    margin-bottom: 1;
+}
+.keys-input:focus, .cust-input:focus { border: solid #6c63ff; }
+
+.keys-list {
+    background: #0a0c14;
+    border: solid #1a1d2e;
+    height: 10;
+    margin-bottom: 1;
+}
+.keys-list > ListItem { color: #b0b0d0; padding: 0 1; }
+.keys-list > ListItem.--highlight { background: #1a1d40; color: #ffffff; }
+
+.keys-buttons, .cust-buttons { height: auto; align: right middle; }
+.keys-buttons Button, .cust-buttons Button { margin-left: 1; }
+.field-label { color: #9f99ff; margin-top: 1; }
+"""
+
+
