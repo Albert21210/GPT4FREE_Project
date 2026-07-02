@@ -70,3 +70,15 @@ KeysScreen, CustomProviderScreen {
 """
 
 
+class KeysScreen(ModalScreen[Optional[tuple[str, str]]]):
+    """
+    Attach an API key to one of the built-in providers.
+
+    Dismisses with:
+      - None              → cancelled
+      - (provider, "")     → key removed for that provider
+      - (provider, key)    → key saved for that provider
+    """
+
+    DEFAULT_CSS = _CSS
+    BINDINGS = [("escape", "cancel", "Cancel")]
