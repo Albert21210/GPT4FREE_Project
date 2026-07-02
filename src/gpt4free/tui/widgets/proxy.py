@@ -107,3 +107,6 @@ class ProxyScreen(ModalScreen[Optional[tuple[Optional[str], bool]]]):
             scope = "ALL providers" if self._current_force else "geoblocked providers only"
             return f"Current: [bold]{self._current_proxy}[/bold]  ·  scope: {scope}"
         return "Current: [dim]not set[/dim]"
+
+    def on_mount(self) -> None:
+        self.query_one("#proxy-input", Input).focus()
