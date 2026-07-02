@@ -101,3 +101,9 @@ class ProxyScreen(ModalScreen[Optional[tuple[Optional[str], bool]]]):
             with Horizontal(classes="proxy-buttons"):
                 yield Button("Cancel", id="cancel-btn", variant="default")
                 yield Button("Save", id="save-btn", variant="primary")
+
+    def _status_text(self) -> str:
+        if self._current_proxy:
+            scope = "ALL providers" if self._current_force else "geoblocked providers only"
+            return f"Current: [bold]{self._current_proxy}[/bold]  ·  scope: {scope}"
+        return "Current: [dim]not set[/dim]"
