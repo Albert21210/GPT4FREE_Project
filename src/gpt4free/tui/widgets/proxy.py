@@ -75,3 +75,29 @@ class ProxyScreen(ModalScreen[Optional[tuple[Optional[str], bool]]]):
         super().__init__()
         self._current_proxy = current_proxy
         self._current_force = current_force
+
+    def compose(self) -> ComposeResult:
+        geoblocked = ", ".join(sorted(PROXY_REQUIRED_PROVIDERS))
+        with Vertical(classes="proxy-box"):
+            yield Label("  🌐  Proxy Settings", classes="proxy-title")
+            yield Static(
+                f"Used by default only for: [bold]{geoblocked}[/bold]\n"
+                "Leave empty and press Save to remove an existing proxy.",
+                classes="proxy-hint",
+            )
+            yield Input(
+                value=self._current_proxy or "",
+                placeholder="socks5://127.0.0.1:1080  or  http://user:pass@host:port",
+                classes="proxy-input",
+                id="proxy-input",
+            )
+            yield Checkbox(
+                "Route ALL providers through this proxy (not just geoblocked ones)",
+                value=self._current_force,
+                classes="proxy-checkbox",
+                id="force-checkbox",
+            )
+            yield Static(self._status_text(), id="status", classes="proxy-status")
+            with Horizontal(classes="proxy-buttons"):
+                yield Button("Cancel", id="cancel-btn", variant="default")
+                yield Button("Save", id="save-btn", variant="primary")
