@@ -137,3 +137,14 @@ class KeysScreen(ModalScreen[Optional[tuple[str, str]]]):
 
     def action_cancel(self) -> None:
         self.dismiss(None)
+
+    def action_save(self) -> None:
+        if not self._selected:
+            self.query_one("#selected-label", Label).update(
+                "[bold red]Pick a provider from the list first[/bold red]"
+            )
+            return
+        key = self.query_one("#key-input", Input).value.strip()
+        self.dismiss((self._selected, key))
+
+
