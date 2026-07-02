@@ -134,3 +134,6 @@ class KeysScreen(ModalScreen[Optional[tuple[str, str]]]):
             self.action_save()
         elif event.button.id == "cancel-btn":
             self.action_cancel()
+
+    def action_cancel(self) -> None:
+        self.dismiss(None)
