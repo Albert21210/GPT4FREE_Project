@@ -190,4 +190,4 @@ class GPT4FREETUI(App[None]):
     }
     Footer > .footer--highlight { background: #6c63ff; color: white; }
     Footer > .footer--key       { color: #6c63ff; }
-    
+    """
