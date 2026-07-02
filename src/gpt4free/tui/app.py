@@ -40,3 +40,20 @@ from gpt4free.tui.widgets import (
     StatusScreen,
 )
 
+
+HELP_TEXT = """\
+[bold #6c63ff]GPT4FREE Commands[/bold #6c63ff]
+
+  [bold]/help[/bold]      — show this help
+  [bold]/provider[/bold]  — change provider
+  [bold]/model[/bold]     — change model
+  [bold]/proxy[/bold]     — configure outbound proxy
+  [bold]/keys[/bold]      — attach an API key to a built-in provider
+  [bold]/custom[/bold]    — add your own OpenAI-compatible provider
+  [bold]/status[/bold]    — probe & show provider status table
+  [bold]/clear[/bold]     — clear conversation history
+  [bold]/new[/bold]       — start a fresh session
+  [bold]/exit[/bold]      — quit
+
+[dim]Tip: use ↑ ↓ arrows to navigate prompt history[/dim]
+"""
