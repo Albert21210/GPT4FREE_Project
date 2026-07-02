@@ -88,3 +88,8 @@ class KeysScreen(ModalScreen[Optional[tuple[str, str]]]):
         self._providers = providers
         self._current_keys = current_keys
         self._selected: Optional[str] = None
+
+    def _item_label(self, p: ProviderInfo) -> str:
+        has_key = "🔑 set" if self._current_keys.get(p.name) else "[dim]no key[/dim]"
+        auth_tag = "[dim](needs auth)[/dim]" if p.needs_auth else "[dim](no auth needed)[/dim]"
+        return f"[bold]{p.name}[/bold]  {auth_tag}  — {has_key}"
