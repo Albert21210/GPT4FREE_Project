@@ -293,3 +293,42 @@ class GPT4FREETUI(App[None]):
             elif self._hist_idx == 0:
                 self._hist_idx = -1
                 inp.value = ""
+
+    # ── Commands ──────────────────────────────────────────────────────────────
+
+    async def _handle_command(self, cmd: str) -> None:
+        log = self.query_one(ChatLog)
+        base = cmd.split()[0].lower()
+
+        if base == "/help":
+            log.add_widget(Static(HELP_TEXT, classes="msg-help"))
+
+        elif base == "/provider":
+            await self.action_pick_provider()
+
+        elif base == "/model":
+            await self.action_pick_model()
+
+        elif base == "/proxy":
+            await self.action_set_proxy()
+
+        elif base in ("/keys", "/key"):
+            await self.action_manage_keys()
+
+        elif base in ("/custom", "/customprovider"):
+            await self.action_add_custom()
+
+        elif base == "/status":
+            await self.action_show_status()
+
+        elif base in ("/clear", "/c"):
+            self.action_clear_chat()
+
+        elif base in ("/new", "/n"):
+            self.action_new_session()
+
+        elif base in ("/exit", "/quit", "/q"):
+            self.action_quit()
+
+        else:
+            log.error(f"Unknown command: {cmd}  — type /help for list")
