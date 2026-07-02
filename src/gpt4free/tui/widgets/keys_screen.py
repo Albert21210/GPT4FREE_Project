@@ -93,3 +93,30 @@ class KeysScreen(ModalScreen[Optional[tuple[str, str]]]):
         has_key = "🔑 set" if self._current_keys.get(p.name) else "[dim]no key[/dim]"
         auth_tag = "[dim](needs auth)[/dim]" if p.needs_auth else "[dim](no auth needed)[/dim]"
         return f"[bold]{p.name}[/bold]  {auth_tag}  — {has_key}"
+
+    def compose(self) -> ComposeResult:
+        with Vertical(classes="keys-box"):
+            yield Label("  🔑  API Keys for Built-in Providers", classes="keys-title")
+            yield Static(
+                "Pick a provider below, then paste its key and press Save.\n"
+                "Unlocks providers that show up as auth_required in status.",
+                classes="keys-hint",
+            )
+            yield ListView(
+                *[
+                    ListItem(Label(self._item_label(p)), name=p.name)
+                    for p in self._providers
+                ],
+                classes="keys-list",
+                id="lst",
+            )
+            yield Label("Key for: [dim]— select a provider above —[/dim]", classes="field-label", id="selected-label")
+            yield Input(
+                placeholder="paste API key here (leave empty + Save to remove)",
+                classes="keys-input",
+                id="key-input",
+                password=True,
+            )
+            with Horizontal(classes="keys-buttons"):
+                yield Button("Cancel", id="cancel-btn", variant="default")
+                yield Button("Save", id="save-btn", variant="primary")
