@@ -49,6 +49,10 @@ class AppConfig:
     proxy: Optional[str] = None
     force_proxy: bool = False
 
+    # Tools / MCP
+    builtin_tools_enabled: bool = True
+    mcp_servers: dict[str, dict] = field(default_factory=dict)
+
     def set_proxy(self, proxy_url: str, force: bool = False) -> None:
         self.proxy = proxy_url.strip() or None
         self.force_proxy = force
@@ -81,6 +85,29 @@ class AppConfig:
 
     def remove_custom_provider(self, name: str) -> None:
         self.custom_providers.pop(name, None)
+
+    def add_mcp_server(
+        self,
+        name: str,
+        command: str,
+        args: Optional[list[str]] = None,
+        env: Optional[dict[str, str]] = None,
+        enabled: bool = True,
+    ) -> None:
+        """Register a local MCP server (launched as `command args...` over stdio)."""
+        self.mcp_servers[name] = {
+            "command": command,
+            "args": args or [],
+            "env": env or {},
+            "enabled": enabled,
+        }
+
+    def remove_mcp_server(self, name: str) -> None:
+        self.mcp_servers.pop(name, None)
+
+    def set_mcp_server_enabled(self, name: str, enabled: bool) -> None:
+        if name in self.mcp_servers:
+            self.mcp_servers[name]["enabled"] = enabled
 
     def add_to_history(self, prompt: str) -> None:
         if not prompt:
@@ -185,4 +212,6 @@ class AppConfig:
         data.setdefault("custom_providers", {})
         data.setdefault("proxy", None)
         data.setdefault("force_proxy", False)
+        data.setdefault("builtin_tools_enabled", True)
+        data.setdefault("mcp_servers", {})
         return data
