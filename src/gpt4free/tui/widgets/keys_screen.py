@@ -128,3 +128,9 @@ class KeysScreen(ModalScreen[Optional[tuple[str, str]]]):
         inp = self.query_one("#key-input", Input)
         inp.value = self._current_keys.get(self._selected, "")
         inp.focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "save-btn":
+            self.action_save()
+        elif event.button.id == "cancel-btn":
+            self.action_cancel()
