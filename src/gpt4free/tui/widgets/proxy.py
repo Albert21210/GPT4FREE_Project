@@ -70,3 +70,8 @@ class ProxyScreen(ModalScreen[Optional[tuple[Optional[str], bool]]]):
         ("escape", "cancel", "Cancel"),
         ("enter", "save", "Save"),
     ]
+
+    def __init__(self, current_proxy: Optional[str] = None, current_force: bool = False) -> None:
+        super().__init__()
+        self._current_proxy = current_proxy
+        self._current_force = current_force
