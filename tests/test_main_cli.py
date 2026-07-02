@@ -14,7 +14,7 @@ runner = CliRunner()
 @pytest.fixture
 def isolated_config(tmp_path):
     """Point the config manager at a throwaway directory for each test."""
-    with patch("gpt4free.config.user_config_dir", return_value=str(tmp_path)):
+    with patch("gpt4free.config.config_manager.user_config_dir", return_value=str(tmp_path)):
         yield tmp_path
 
 class TestKeysCommand:

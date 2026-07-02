@@ -1,7 +1,6 @@
 from __future__ import annotations
 from unittest.mock import patch
 import pytest
-import json
 from gpt4free.config import AppConfig, ConfigManager
 from gpt4free.providers import DEFAULT_MODEL, DEFAULT_PROVIDER
 
@@ -10,17 +9,11 @@ class TestConfigManager:
 
     @pytest.fixture
     def temp_config_dir(self, tmp_path):
-        config_dir = tmp_path / "gpt4free-tui"
-        config_dir.mkdir(parents=True, exist_ok=True)
         with patch("gpt4free.config.config_manager.user_config_dir", return_value=str(tmp_path)):
-            yield config_dir
+            yield tmp_path
 
     def test_save_and_load(self, temp_config_dir):
         mgr = ConfigManager()
-        mgr._config_path = temp_config_dir / "config.json"
-        mgr._backup_path = temp_config_dir / "backups"
-        mgr._backup_path.mkdir(exist_ok=True)
-        
         cfg = AppConfig(provider="PollinationsAI", model="openai")
         cfg.add_to_history("test prompt")
 
@@ -33,11 +26,8 @@ class TestConfigManager:
 
     def test_corrupted_config_recovery(self, temp_config_dir):
         mgr = ConfigManager()
-        mgr._config_path = temp_config_dir / "config.json"
-        mgr._backup_path = temp_config_dir / "backups"
-        mgr._backup_path.mkdir(exist_ok=True)
-        
         config_path = mgr._config_path
+
         config_path.write_text("{ this is not json }", encoding="utf-8")
 
         cfg = mgr.load()
@@ -46,15 +36,11 @@ class TestConfigManager:
 
     def test_backup_created_on_save(self, temp_config_dir):
         mgr = ConfigManager()
-        mgr._config_path = temp_config_dir / "config.json"
-        mgr._backup_path = temp_config_dir / "backups"
-        mgr._backup_path.mkdir(exist_ok=True)
-        
         cfg = AppConfig()
 
         mgr.save(cfg)
         backups = list(mgr._backup_path.glob("config_*.json"))
-        assert len(backups) >= 0
+        assert len(backups) == 0
 
         mgr.save(cfg)
         backups = list(mgr._backup_path.glob("config_*.json"))
@@ -62,10 +48,6 @@ class TestConfigManager:
 
     def test_backup_limit(self, temp_config_dir):
         mgr = ConfigManager()
-        mgr._config_path = temp_config_dir / "config.json"
-        mgr._backup_path = temp_config_dir / "backups"
-        mgr._backup_path.mkdir(exist_ok=True)
-        
         cfg = AppConfig()
 
         for i in range(15):
@@ -77,10 +59,6 @@ class TestConfigManager:
 
     def test_export_import(self, temp_config_dir):
         mgr = ConfigManager()
-        mgr._config_path = temp_config_dir / "config.json"
-        mgr._backup_path = temp_config_dir / "backups"
-        mgr._backup_path.mkdir(exist_ok=True)
-        
         cfg = AppConfig(provider="PollinationsAI", model="openai")
         mgr.save(cfg)
 
@@ -97,10 +75,6 @@ class TestConfigManager:
 
     def test_reset(self, temp_config_dir):
         mgr = ConfigManager()
-        mgr._config_path = temp_config_dir / "config.json"
-        mgr._backup_path = temp_config_dir / "backups"
-        mgr._backup_path.mkdir(exist_ok=True)
-        
         cfg = AppConfig(provider="Custom", model="custom")
         mgr.save(cfg)
 
@@ -111,9 +85,6 @@ class TestConfigManager:
 
     def test_rollback(self, temp_config_dir):
         mgr = ConfigManager()
-        mgr._config_path = temp_config_dir / "config.json"
-        mgr._backup_path = temp_config_dir / "backups"
-        mgr._backup_path.mkdir(exist_ok=True)
 
         cfg1 = AppConfig(provider="Provider1", model="model1")
         mgr.save(cfg1)

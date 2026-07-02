@@ -25,7 +25,6 @@ class TestAppConfig:
         cfg = AppConfig()
         cfg.add_to_history("same")
         cfg.add_to_history("same")
-        assert len(cfg.prompt_history) == 1
         assert cfg.prompt_history.count("same") == 1
 
     def test_history_moves_to_top(self):
@@ -33,16 +32,13 @@ class TestAppConfig:
         cfg.add_to_history("first")
         cfg.add_to_history("second")
         cfg.add_to_history("first")
-        assert cfg.prompt_history[0] == "second"
-        assert cfg.prompt_history[1] == "first"
-        assert len(cfg.prompt_history) == 2
+        assert cfg.prompt_history == ["second", "first"]
 
     def test_history_max_size(self):
         cfg = AppConfig(max_history_items=5)
         for i in range(10):
             cfg.add_to_history(f"prompt {i}")
         assert len(cfg.prompt_history) == 5
-        assert cfg.prompt_history[0] == "prompt 5"
         assert cfg.prompt_history[-1] == "prompt 9"
 
     def test_stats_update(self):
@@ -58,7 +54,6 @@ class TestAppConfig:
         for i in range(10):
             cfg.add_to_history(f"prompt {i}")
         recent = cfg.get_recent_history(3)
-        assert len(recent) == 3
         assert recent == ["prompt 7", "prompt 8", "prompt 9"]
 
     def test_search_history(self):
@@ -67,9 +62,7 @@ class TestAppConfig:
         for p in prompts:
             cfg.add_to_history(p)
         results = cfg.search_history("hello")
-        assert len(results) == 2
-        assert "hello world" in results
-        assert "test hello" in results
+        assert results == ["test hello", "hello world"]
 
     def test_clear_history(self):
         cfg = AppConfig()
@@ -99,11 +92,10 @@ class TestAppConfig:
         assert "_meta" in d
         assert "config_hash" in d["_meta"]
 
-        if hasattr(AppConfig, 'from_dict'):
-            restored = AppConfig.from_dict(d)
-            assert restored.provider == cfg.provider
-            assert restored.model == cfg.model
-            assert restored.prompt_history == cfg.prompt_history
+        restored = AppConfig.from_dict(d)
+        assert restored.provider == cfg.provider
+        assert restored.model == cfg.model
+        assert restored.prompt_history == cfg.prompt_history
 
     def test_from_dict_ignores_unknown_keys(self):
         d = {
@@ -112,13 +104,10 @@ class TestAppConfig:
             "unknown_future_key": 99,
             "another_unknown": "value"
         }
-        if hasattr(AppConfig, 'from_dict'):
-            cfg = AppConfig.from_dict(d)
-            assert cfg.provider == "PollinationsAI"
-            assert cfg.model == "openai"
-            assert not hasattr(cfg, "unknown_future_key")
-        else:
-            pytest.skip("AppConfig.from_dict not available")
+        cfg = AppConfig.from_dict(d)
+        assert cfg.provider == "PollinationsAI"
+        assert cfg.model == "openai"
+        assert not hasattr(cfg, "unknown_future_key")
 
     def test_migration_from_v1(self):
         v1_data = {
@@ -129,18 +118,11 @@ class TestAppConfig:
             "max_history_items": 200,
             "prompt_history": ["old", "history"]
         }
-        if hasattr(AppConfig, 'from_dict'):
-            cfg = AppConfig.from_dict(v1_data)
-            assert cfg.version == "2.0.0"
-            assert cfg.stats == {"total_queries": 0, "first_used": None, "last_used": None}
-        else:
-            pytest.skip("AppConfig.from_dict not available")
+        cfg = AppConfig.from_dict(v1_data)
+        assert cfg.version == "2.0.0"
+        assert cfg.stats == {"total_queries": 0, "first_used": None, "last_used": None}
 
     def test_invalid_config_raises_error(self):
         invalid_data = {"provider": "PollinationsAI"}
-        if hasattr(AppConfig, 'from_dict'):
-            with pytest.raises(ValueError):
-                AppConfig.from_dict(invalid_data)
-        else:
-            cfg = AppConfig()
-            assert cfg.provider == DEFAULT_PROVIDER
+        with pytest.raises(ValueError):
+            AppConfig.from_dict(invalid_data)

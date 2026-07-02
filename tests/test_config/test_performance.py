@@ -14,19 +14,12 @@ class TestPerformance:
             cfg.add_to_history(f"prompt {i}")
         duration = time.perf_counter() - start
 
-        assert duration < 2.0
+        assert duration < 1.0
         assert len(cfg.prompt_history) == 1000
 
     def test_config_save_performance(self, tmp_path):
-        config_dir = tmp_path / "gpt4free-tui"
-        config_dir.mkdir(parents=True, exist_ok=True)
-        
         with patch("gpt4free.config.config_manager.user_config_dir", return_value=str(tmp_path)):
             mgr = ConfigManager()
-            mgr._config_path = config_dir / "config.json"
-            mgr._backup_path = config_dir / "backups"
-            mgr._backup_path.mkdir(exist_ok=True)
-            
             cfg = AppConfig()
             for i in range(5000):
                 cfg.add_to_history(f"prompt {i}")
@@ -35,4 +28,4 @@ class TestPerformance:
             mgr.save(cfg)
             duration = time.perf_counter() - start
 
-            assert duration < 1.0
+            assert duration < 0.5
