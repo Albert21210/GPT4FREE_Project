@@ -502,3 +502,16 @@ class GPT4FREETUI(App[None]):
     def action_quit(self) -> None:
         save_config(self._cfg)
         self.exit()
+
+    # ── Helpers ───────────────────────────────────────────────────────────────
+
+    def _sb_left(self) -> str:
+        icon = "⟳" if self._busy else "●"
+        state = " generating…" if self._busy else " ready"
+        proxy_tag = ""
+        if self._session.proxy:
+            proxy_tag = "  🌐 proxy:ALL" if self._session.force_proxy else "  🌐 proxy"
+        return f" {icon} {self._session.provider} / {self._session.model}{state}{proxy_tag}"
+
+    def _refresh_status(self) -> None:
+        self.query_one("#sb-left", Static).update(self._sb_left())
