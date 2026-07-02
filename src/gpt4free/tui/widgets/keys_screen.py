@@ -10,3 +10,14 @@ by the caller (app.py) after dismiss(), same as ProxyScreen. Two screens:
                           (base_url + api_key + model list) that isn't part
                           of the built-in g4f registry at all.
 """
+
+from __future__ import annotations
+
+from typing import Optional
+
+from textual.app import ComposeResult
+from textual.containers import Horizontal, Vertical
+from textual.screen import ModalScreen
+from textual.widgets import Button, Input, Label, ListItem, ListView, Static
+
+from gpt4free.providers import ProviderInfo
