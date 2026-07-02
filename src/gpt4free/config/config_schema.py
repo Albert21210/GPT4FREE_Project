@@ -33,7 +33,9 @@ CONFIG_SCHEMA = {
         "api_keys": {"type": "object"},
         "custom_providers": {"type": "object"},
         "proxy": {"type": ["string", "null"]},
-        "force_proxy": {"type": "boolean"}
+        "force_proxy": {"type": "boolean"},
+        "builtin_tools_enabled": {"type": "boolean"},
+        "mcp_servers": {"type": "object"}
     },
     "required": ["version", "provider", "model"]
 }
