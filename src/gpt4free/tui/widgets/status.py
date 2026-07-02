@@ -1,6 +1,8 @@
 """Live provider status screen with optional probing."""
 
 from __future__ import annotations
+import os
+from typing import Optional
 
 from textual.app import ComposeResult
 from textual.containers import Vertical
