@@ -53,3 +53,20 @@ ProxyScreen {
 .proxy-buttons Button { margin-left: 1; }
 """
 
+
+class ProxyScreen(ModalScreen[Optional[tuple[Optional[str], bool]]]):
+    """
+    Lets the user set/clear a proxy URL and whether it applies to every
+    provider or only the geoblocked ones (Gemini/MetaAI/Grok).
+
+    Dismisses with:
+      - None                  → cancelled, no change
+      - (None, False)         → proxy cleared
+      - (proxy_url, force)    → proxy saved
+    """
+
+    DEFAULT_CSS = _CSS
+    BINDINGS = [
+        ("escape", "cancel", "Cancel"),
+        ("enter", "save", "Save"),
+    ]
