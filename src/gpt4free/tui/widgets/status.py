@@ -20,6 +20,8 @@ from gpt4free.providers import (
 )
 
 
+PROXY_ENV_VAR = "G4F_PROXY"
+
 _CSS = """
 StatusScreen {
     align: center middle;
