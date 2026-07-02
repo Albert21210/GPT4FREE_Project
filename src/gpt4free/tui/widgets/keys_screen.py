@@ -161,3 +161,32 @@ class CustomProviderScreen(ModalScreen[Optional[dict]]):
 
     DEFAULT_CSS = _CSS
     BINDINGS = [("escape", "cancel", "Cancel")]
+
+    def compose(self) -> ComposeResult:
+        with Vertical(classes="cust-box"):
+            yield Label("  ➕  Add Custom Provider", classes="cust-title")
+            yield Static(
+                "For your own OpenAI-compatible API (e.g. Together, a\n"
+                "self-hosted server, or any other provider with your own token).",
+                classes="cust-hint",
+            )
+            yield Label("Name", classes="field-label")
+            yield Input(placeholder="e.g. Together", classes="cust-input", id="name-input")
+            yield Label("Base URL", classes="field-label")
+            yield Input(
+                placeholder="e.g. https://api.together.xyz/v1",
+                classes="cust-input",
+                id="url-input",
+            )
+            yield Label("API key (optional)", classes="field-label")
+            yield Input(placeholder="sk-...", classes="cust-input", id="key-input", password=True)
+            yield Label("Models (comma-separated)", classes="field-label")
+            yield Input(
+                placeholder="e.g. meta-llama/Llama-3-70b-chat-hf, Qwen/Qwen2.5-72B-Instruct",
+                classes="cust-input",
+                id="models-input",
+            )
+            yield Static("", id="error-label", classes="cust-hint")
+            with Horizontal(classes="cust-buttons"):
+                yield Button("Cancel", id="cancel-btn", variant="default")
+                yield Button("Add", id="save-btn", variant="primary")
