@@ -60,6 +60,10 @@ class StatusScreen(ModalScreen[None]):
         ("r",      "probe",   "Re-check all"),
     ]
 
+    def __init__(self, cfg: Optional[AppConfig] = None) -> None:
+        super().__init__()
+        self._cfg = cfg
+
     def compose(self) -> ComposeResult:
         with Vertical(classes="ov-box"):
             yield Label(
