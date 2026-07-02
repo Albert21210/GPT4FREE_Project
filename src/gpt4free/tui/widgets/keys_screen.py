@@ -148,3 +148,16 @@ class KeysScreen(ModalScreen[Optional[tuple[str, str]]]):
         self.dismiss((self._selected, key))
 
 
+class CustomProviderScreen(ModalScreen[Optional[dict]]):
+    """
+    Register a user-added OpenAI-compatible provider (e.g. Together AI, a
+    self-hosted endpoint, or any other service with a `/chat/completions`
+    route) that isn't part of the built-in g4f registry.
+
+    Dismisses with:
+      - None    → cancelled
+      - dict     → {"name": ..., "base_url": ..., "api_key": ..., "models": [...]}
+    """
+
+    DEFAULT_CSS = _CSS
+    BINDINGS = [("escape", "cancel", "Cancel")]
