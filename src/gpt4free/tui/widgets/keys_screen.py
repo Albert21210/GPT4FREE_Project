@@ -120,3 +120,11 @@ class KeysScreen(ModalScreen[Optional[tuple[str, str]]]):
             with Horizontal(classes="keys-buttons"):
                 yield Button("Cancel", id="cancel-btn", variant="default")
                 yield Button("Save", id="save-btn", variant="primary")
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        self._selected = event.item.name
+        label = self.query_one("#selected-label", Label)
+        label.update(f"Key for: [bold]{self._selected}[/bold]")
+        inp = self.query_one("#key-input", Input)
+        inp.value = self._current_keys.get(self._selected, "")
+        inp.focus()
