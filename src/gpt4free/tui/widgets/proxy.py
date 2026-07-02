@@ -16,3 +16,40 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Input, Label, Static
 
 from gpt4free.providers import PROXY_REQUIRED_PROVIDERS
+
+_CSS = """
+ProxyScreen {
+    align: center middle;
+    background: #00000099;
+}
+.proxy-box {
+    width: 70;
+    height: auto;
+    border: round #6c63ff;
+    background: #0d0f17;
+    padding: 1 2;
+}
+.proxy-title {
+    color: #6c63ff;
+    text-style: bold;
+    border-bottom: solid #1a1d2e;
+    padding-bottom: 1;
+    margin-bottom: 1;
+}
+.proxy-hint {
+    color: #6f7390;
+    margin-bottom: 1;
+}
+.proxy-input {
+    background: #12152a;
+    border: solid #252850;
+    color: #e0e0ff;
+    margin-bottom: 1;
+}
+.proxy-input:focus { border: solid #6c63ff; }
+.proxy-checkbox { margin-bottom: 1; color: #b0b0d0; }
+.proxy-status { color: #6f7390; margin-bottom: 1; }
+.proxy-buttons { height: auto; align: right middle; }
+.proxy-buttons Button { margin-left: 1; }
+"""
+
