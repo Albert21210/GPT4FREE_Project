@@ -82,3 +82,9 @@ class KeysScreen(ModalScreen[Optional[tuple[str, str]]]):
 
     DEFAULT_CSS = _CSS
     BINDINGS = [("escape", "cancel", "Cancel")]
+
+    def __init__(self, providers: list[ProviderInfo], current_keys: dict[str, str]) -> None:
+        super().__init__()
+        self._providers = providers
+        self._current_keys = current_keys
+        self._selected: Optional[str] = None
