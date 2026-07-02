@@ -119,3 +119,8 @@ class ProxyScreen(ModalScreen[Optional[tuple[Optional[str], bool]]]):
 
     def action_cancel(self) -> None:
         self.dismiss(None)
+
+    def action_save(self) -> None:
+        raw = self.query_one("#proxy-input", Input).value.strip()
+        force = self.query_one("#force-checkbox", Checkbox).value
+        self.dismiss((raw or None, force))
